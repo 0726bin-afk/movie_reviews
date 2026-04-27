@@ -1,7 +1,7 @@
 """
 script_tmi.py
 =============
-scripts/ 폴더의 {영화제목}_유튜브.txt → Groq로 카테고리별 TMI 추출 → Supabase 저장
+scripts/ 폴더의 {영화제목}_*.txt → Gemini 2.5 Flash로 카테고리별 TMI 추출 → Supabase 저장
 
 실행:
   python script_tmi.py --title 살인의추억       # 특정 영화
@@ -12,12 +12,15 @@ scripts/ 폴더의 {영화제목}_유튜브.txt → Groq로 카테고리별 TMI 
 
 import os
 import time
+import warnings
 import argparse
 import psycopg2
 import psycopg2.extras
 from pathlib import Path
-from groq import Groq
 from dotenv import load_dotenv
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -32,8 +35,10 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD"),
 }
 
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-GROQ_MODEL  = "llama-3.3-70b-versatile"
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+gemini_model  = genai.GenerativeModel("gemini-2.5-flash")
+API_CALL_INTERVAL = 4  # 분당 15회 제한 → 4초 간격
+
 SCRIPTS_DIR = Path(__file__).parent / "scripts"
 
 ALL_CATEGORIES = ["촬영지", "OST", "비하인드", "옥에티", "캐스팅비화"]
@@ -48,17 +53,18 @@ CATEGORY_DESC = {
 
 
 # ============================================================
-#  Groq 추출
+#  Gemini 추출
 # ============================================================
-def ask_groq(title: str, category: str, text: str) -> list[str]:
+def ask_gemini(title: str, category: str, text: str) -> list[str]:
     """스크립트 텍스트에서 카테고리 관련 TMI만 추출."""
 
-    prompt = f"""아래는 영화 '{title}'에 대한 유튜브 영상 스크립트입니다.
+    prompt = f"""아래는 영화 '{title}'에 대한 스크립트/기사입니다.
 이 중에서 '{category}' 관련 TMI만 골라서 정리해줘.
 
 '{category}'의 의미: {CATEGORY_DESC[category]}
 
 규칙:
+- 스크립트가 영어여도 반드시 한국어로 작성
 - 실제로 {category}에 해당하는 내용만 포함
 - '이 장면' 같은 지시어가 나오면 앞뒤 문맥으로 어떤 장면인지 유추해서 구체적으로 써줘
 - TMI 하나당 한 줄, 2~4문장으로 요약
@@ -66,28 +72,27 @@ def ask_groq(title: str, category: str, text: str) -> list[str]:
 - 번호나 기호 없이 줄글로
 
 [스크립트]
-{text[:6000]}"""
+{text[:8000]}"""
 
     for attempt in range(3):
         try:
-            resp   = groq_client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-                max_tokens=1000,
-            )
-            result = resp.choices[0].message.content.strip()
+            resp   = gemini_model.generate_content(prompt)
+            result = resp.text.strip()
+            time.sleep(API_CALL_INTERVAL)
             if result.startswith("없음"):
                 return []
             return [l.strip() for l in result.splitlines() if len(l.strip()) >= 20]
 
         except Exception as e:
             err = str(e)
-            if "rate_limit" in err.lower() or "429" in err:
-                print(f"    rate limit → 60초 대기...")
+            if "429" in err or "quota" in err.lower() or "rate" in err.lower():
+                if "day" in err.lower() or "daily" in err.lower():
+                    print(f"    ❌ 일일 한도 초과.")
+                    return []
+                print(f"    rate limit → 60초 대기 (attempt {attempt+1}/3)...")
                 time.sleep(60)
             else:
-                print(f"    Groq 오류: {e}")
+                print(f"    Gemini 오류: {e}")
                 return []
 
     return []
@@ -117,20 +122,24 @@ def process(title: str, overwrite: bool, dry_run: bool,
             conn, cursor, insert_cursor) -> int:
     """영화 하나 처리. 저장 건수 반환."""
 
-    # txt 파일 찾기
-    txt_path = SCRIPTS_DIR / f"{title}_유튜브.txt"
-    if not txt_path.exists():
-        print(f"  ❌ 파일 없음: {txt_path}")
+    txt_files = sorted(SCRIPTS_DIR.glob(f"{title}_*.txt"))
+    if not txt_files:
+        print(f"  ❌ 파일 없음: {SCRIPTS_DIR / title}_*.txt")
         return 0
 
-    # DB에서 movie_id 조회
     movie_id = get_movie_id(cursor, title)
     if not movie_id:
         print(f"  ❌ DB에 '{title}' 없음 (insert_movies.py 먼저 실행)")
         return 0
 
-    text = txt_path.read_text(encoding="utf-8")
-    print(f"  스크립트 {len(text)}자 로드")
+    parts = []
+    for p in txt_files:
+        content = p.read_text(encoding="utf-8")
+        parts.append(f"[출처: {p.name}]\n{content}")
+        print(f"  {p.name} {len(content)}자 로드")
+    text = "\n\n" + "="*40 + "\n\n".join(parts)
+    source_names = ";".join(p.name for p in txt_files)
+    print(f"  총 {len(text)}자")
 
     saved_this = 0
     for category in ALL_CATEGORIES:
@@ -138,12 +147,11 @@ def process(title: str, overwrite: bool, dry_run: bool,
             print(f"  [{category}] 이미 존재 → 스킵")
             continue
 
-        print(f"  [{category}] Groq 분석 중...")
-        lines = ask_groq(title, category, text)
+        print(f"  [{category}] Gemini 분석 중...")
+        lines = ask_gemini(title, category, text)
 
         if not lines:
             print(f"    → 관련 내용 없음, 스킵")
-            time.sleep(1)
             continue
 
         print(f"    → {len(lines)}줄 추출")
@@ -158,12 +166,10 @@ def process(title: str, overwrite: bool, dry_run: bool,
                 insert_cursor.execute("""
                     INSERT INTO movie_tmi (movie_id, category, content, source_url)
                     VALUES (%s, %s, %s, %s)
-                """, (movie_id, category, line, str(txt_path.name)))
+                """, (movie_id, category, line, source_names))
                 saved_this += 1
             conn.commit()
             print(f"    → 저장 완료")
-
-        time.sleep(2)  # Groq rate limit
 
     return saved_this
 
@@ -176,11 +182,10 @@ def run(overwrite: bool = False, target_title: str = None, dry_run: bool = False
     if target_title:
         titles = [target_title]
     else:
-        # scripts/ 폴더에서 *_유튜브.txt 전부
-        titles = [
-            f.stem.replace("_유튜브", "")
-            for f in sorted(SCRIPTS_DIR.glob("*_유튜브.txt"))
-        ]
+        titles = sorted({
+            "_".join(f.stem.split("_")[:-1])
+            for f in SCRIPTS_DIR.glob("*_*.txt")
+        })
 
     print(f"처리할 영화: {titles}\n")
 
@@ -201,7 +206,7 @@ def run(overwrite: bool = False, target_title: str = None, dry_run: bool = False
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="유튜브 스크립트 → TMI 추출기")
+    parser = argparse.ArgumentParser(description="스크립트 txt → Gemini TMI 추출기")
     parser.add_argument("--title",     type=str, default=None, help="특정 영화 제목")
     parser.add_argument("--overwrite", action="store_true",    help="기존 데이터 덮어쓰기")
     parser.add_argument("--dry-run",   action="store_true",    help="저장 없이 결과 확인")
