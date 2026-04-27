@@ -5,7 +5,7 @@ LGU_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(LGU_DIR)
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 target_path = os.path.join(DATA_DIR, "cleaned_total_reviews.json")
-report_path = os.path.join(DATA_DIR, "data_error_report.txt")
+report_path = os.path.join(LGU_DIR, "data_error_report.txt")
 
 def run_integrity_check():
     if not os.path.exists(target_path):
