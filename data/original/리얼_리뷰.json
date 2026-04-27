@@ -11,7 +11,16 @@
         "genreAlt": "드라마",
         "repNationNm": "호주",
         "repGenreNm": "드라마",
-        "directors": [],
+        "directors": [
+            {
+                "peopleNm": "이정섭",
+                "peopleNmEn": ""
+            },
+            {
+                "peopleNm": "이사랑",
+                "peopleNmEn": ""
+            }
+        ],
         "actors": [],
         "staffs": [],
         "audits": [],
