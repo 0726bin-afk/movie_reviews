@@ -9,12 +9,15 @@ LangGraph의 모든 노드는 시그니처가 (state) -> state 형태.
 - 각 노드는 자기가 책임지는 필드만 채우거나 갱신
 - 새 필드 추가 시 모든 노드가 영향받으므로 신중하게
 
-`messages` 필드는 Phase 4에서 Annotated[..., add_messages] reducer로 업그레이드 예정.
-지금은 plain list로 단순하게.
+Phase 4 변경:
+- `messages`에 `add_messages` reducer 적용 — 멀티턴에서 노드가 새 메시지만 append하면
+  자동 누적. checkpointer와 함께 동작해 멀티턴 컨텍스트 유지.
+- `_question_embedding` 추가 — cache_check가 만들어두면 save_cache가 재사용.
 """
-from typing import Literal, Optional, TypedDict
+from typing import Annotated, Literal, Optional, TypedDict
 
 from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 
 from core.types import Citation, RetrievedDoc
 
@@ -42,9 +45,9 @@ class QueryState(TypedDict, total=False):
     """그래프 상태 — 노드 간 계약."""
 
     # ====== 입력 ======
-    question: str                        # 사용자 질문
-    session_id: str                      # 멀티턴 식별자 (Checkpointer key)
-    messages: list[BaseMessage]          # 멀티턴 히스토리 (Phase 4)
+    question: str                                            # 사용자 질문
+    session_id: str                                          # 멀티턴 식별자 (Checkpointer key)
+    messages: Annotated[list[BaseMessage], add_messages]     # 멀티턴 히스토리. add_messages reducer로 자동 누적
 
     # ====== 라우팅 (route_query 노드가 채움) ======
     query_type: Optional[QueryType]
@@ -54,6 +57,7 @@ class QueryState(TypedDict, total=False):
     cache_hit: bool
     cache_source: Optional[CacheSource]  # "exact" | "similar"
     cache_score: Optional[float]         # 유사 매칭 시 코사인 점수
+    _question_embedding: Optional[list[float]]   # cache_check가 만들면 save_cache가 재사용
 
     # ====== 검색 (retrieve / ground 노드가 채움) ======
     retrieved_docs: list[RetrievedDoc]   # Self-Query Retriever 결과

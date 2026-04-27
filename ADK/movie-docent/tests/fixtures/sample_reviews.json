@@ -1,0 +1,35 @@
+{
+  "movie": {
+    "movie_id": 1,
+    "title": "기생충",
+    "director": "봉준호",
+    "release_date": "2019-05-30",
+    "genre": "드라마, 스릴러",
+    "cast_members": "송강호, 이선균, 조여정, 최우식, 박소담",
+    "tmdb_rating": 8.5,
+    "overview": "전원 백수인 기택네 장남 기우가 박사장네 고액 과외 선생이 되며 시작되는 두 가족의 기묘한 동거. 빈부격차를 계단으로 시각화한 봉준호 특유의 블랙코미디."
+  },
+  "reviews": [
+    {
+      "review_id": 1,
+      "reviewer_nickname": "씨네필",
+      "rating": 4.5,
+      "content": "봉준호 감독 특유의 블랙코미디와 사회비판이 절묘하게 어우러진 걸작. 송강호의 연기는 말할 것도 없고, 조여정의 재발견. 칸 황금종려상이 괜히 나온 게 아님.",
+      "likes_count": 312
+    },
+    {
+      "review_id": 2,
+      "reviewer_nickname": "moviewatcher",
+      "rating": 5.0,
+      "content": "계단 영화의 정수. 빈부격차를 이렇게 시각적으로 풀어낸 영화는 처음 봤다. 미장센 하나하나가 다 의미가 있고, 두 번째 봤을 때 더 많이 보인다.",
+      "likes_count": 245
+    },
+    {
+      "review_id": 3,
+      "reviewer_nickname": "익명_3",
+      "rating": 3.0,
+      "content": "기대만큼은 아니었다. 후반부 전개가 다소 작위적이라고 느꼈고, 비유가 너무 직설적이라 영화의 결을 깬다고 봤음. 그래도 봉테일은 봉테일.",
+      "likes_count": 87
+    }
+  ]
+}
