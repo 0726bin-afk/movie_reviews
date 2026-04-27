@@ -1,0 +1,127 @@
+Metadata-Version: 2.4
+Name: movie-docent
+Version: 0.1.0
+Summary: 지능형 영화 큐레이션 도슨트 챗봇 — 리뷰 기반 RAG 가이드
+Author: 안도겸, 이경욱, 최정빈
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=2.7
+Requires-Dist: pydantic-settings>=2.3
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: langchain>=0.3
+Requires-Dist: langchain-core>=0.3
+Requires-Dist: langchain-google-genai>=2.0
+Requires-Dist: langgraph>=0.2
+Requires-Dist: langgraph-checkpoint-postgres>=2.0
+Requires-Dist: supabase>=2.8
+Requires-Dist: asyncpg>=0.29
+Requires-Dist: pgvector>=0.3
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn[standard]>=0.32
+Requires-Dist: sse-starlette>=2.1
+Provides-Extra: ingestion
+Requires-Dist: playwright>=1.47; extra == "ingestion"
+Requires-Dist: requests>=2.32; extra == "ingestion"
+Requires-Dist: duckduckgo-search>=6.3; extra == "ingestion"
+Requires-Dist: beautifulsoup4>=4.12; extra == "ingestion"
+Provides-Extra: frontend
+Requires-Dist: streamlit>=1.39; extra == "frontend"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.3; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.24; extra == "dev"
+Requires-Dist: ruff>=0.7; extra == "dev"
+Requires-Dist: mypy>=1.13; extra == "dev"
+Requires-Dist: ipykernel>=6.29; extra == "dev"
+
+# Movie Docent — 지능형 영화 큐레이션 도슨트 챗봇
+
+흩어진 영화 리뷰와 TMI 정보를 LLM 기반 RAG로 통합하여, **"관람 전·중·후"** 모든 순간의 궁금증을 해결해주는 대화형 영화 가이드 서비스.
+
+- **기간**: 2026-04-22 ~ 2026-05-15 (약 3.5주)
+- **팀**: 안도겸 (RAG·기획) / 이경욱 (데이터 수집·가공) / 최정빈 (DB·그라운딩·백엔드)
+- **핵심 스택**: LangGraph + LangChain · Supabase (PostgreSQL + pgvector) · FastAPI · Streamlit
+
+전체 기획은 [`프로젝트 기획안 (Project Proposal)1.2.md`](./프로젝트%20기획안%20%28Project%20Proposal%291.2.md), 아키텍처 상세는 [`RAG_아키텍처_설계.md`](./RAG_아키텍처_설계.md), 파일별 역할은 [`파일별_역할분담.md`](./파일별_역할분담.md) 참고.
+
+---
+
+## 요구사항
+
+- **Python 3.11 이상**
+- Gemini API 키 (무료 티어 가능, https://aistudio.google.com/apikey)
+- Supabase 계정 (Phase 2 후반부터)
+
+## 설치 및 초기 세팅
+
+```bash
+# 1) 가상환경 생성 (권장)
+python -m venv .venv
+source .venv/bin/activate        # macOS / Linux
+# .venv\Scripts\activate         # Windows
+
+# 2) 프로젝트 editable install (dev 툴 포함)
+pip install -e ".[dev]"
+
+# 3) 환경변수 세팅
+cp .env.example .env             # Windows: copy .env.example .env
+# .env 파일을 열어 GEMINI_API_KEY 값을 채워넣으세요.
+
+# 4) 설정 로드 확인
+python -c "from config.settings import settings; print(settings.LLM_PROVIDER)"
+```
+
+마지막 명령어 결과가 `gemini`로 출력되면 **Phase 0 세팅 완료**.
+
+---
+
+## 프로젝트 구조
+
+```
+movie-docent/
+├── config/        # 설정 로더 (settings, model_registry)
+├── src/
+│   ├── core/         # 공통 타입·예외·로깅
+│   ├── providers/    # LLM / Embedding / Tagger 추상화 — 모델 교체의 핵심
+│   ├── db/           # Supabase + pgvector (스키마·리포지토리)
+│   ├── ingestion/    # 오프라인 파이프라인 (크롤링·태깅·임베딩)
+│   ├── rag/          # LangGraph 그래프 + LangChain 컴포넌트
+│   ├── api/          # FastAPI 엔드포인트
+│   └── eval/         # 평가 세트 및 메트릭
+├── frontend/      # Streamlit MVP
+├── tests/         # unit / integration / fixtures
+├── scripts/       # setup_db, benchmark, reembed
+├── data/          # 로컬 데이터 (git 제외)
+└── notebooks/     # 프로토타이핑
+```
+
+---
+
+## Import 규칙 (src layout)
+
+`src/` 하위는 최상위 패키지로 취급됩니다. 즉:
+
+```python
+# ✅ 올바름
+from core.types import Movie
+from rag.state import QueryState
+from providers.llm import get_llm
+from config.settings import settings
+
+# ❌ 틀림 (src. 접두어 없음)
+from src.core.types import Movie
+```
+
+---
+
+## 진행 로드맵
+
+| Phase | 목표 | 기간 |
+| --- | --- | --- |
+| 0 | 프로젝트 세팅 (현재) | 반나절 |
+| 1 | 뼈대 3총사 (`core/types.py` · `providers/base.py` · `rag/state.py`) | 1~2일 |
+| 2 | ⭐ 첫 end-to-end (Gemini가 답변) | 3~5일 |
+| 3 | LangGraph 재조립 | 5~8일 |
+| 4 | 캐시 + 멀티턴 | 8~12일 |
+| 5 | 평가 & 운영 | 마지막 주 |
+
+개인 로드맵: [`작업순서_안도겸.md`](./작업순서_안도겸.md)

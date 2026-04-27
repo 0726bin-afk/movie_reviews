@@ -1,0 +1,112 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "movie-docent"
+version = "0.1.0"
+description = "지능형 영화 큐레이션 도슨트 챗봇 — 리뷰 기반 RAG 가이드"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "안도겸" },
+    { name = "이경욱" },
+    { name = "최정빈" },
+]
+
+# ------------------------------------------------------------------
+# 런타임 의존성
+# Phase별 주석을 달아뒀어. 초기(pip install) 시 충돌 나면
+# 해당 줄만 주석 처리하고 나중에 Phase에 도달했을 때 풀어도 됨.
+# ------------------------------------------------------------------
+dependencies = [
+    # === Phase 0~1: 설정 & 타입 ===
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "python-dotenv>=1.0",
+
+    # === Phase 2: LLM & LangChain 기본 ===
+    "langchain>=0.3",
+    "langchain-core>=0.3",
+    "langchain-google-genai>=2.0",
+    # 필요 시 주석 해제 (Phase 4 A/B 비교 단계)
+    # "langchain-openai>=0.2",
+    # "langchain-anthropic>=0.3",
+
+    # === Phase 3: LangGraph ===
+    "langgraph>=0.2",
+    "langgraph-checkpoint-postgres>=2.0",
+
+    # === Phase 2 후반 ~ Phase 3: DB ===
+    "supabase>=2.8",
+    "asyncpg>=0.29",
+    "pgvector>=0.3",
+
+    # === Phase 5: API 서버 ===
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sse-starlette>=2.1",
+]
+
+[project.optional-dependencies]
+# 이경욱 담당 — 데이터 수집 시 별도 설치
+ingestion = [
+    "playwright>=1.47",
+    "requests>=2.32",
+    "duckduckgo-search>=6.3",
+    "beautifulsoup4>=4.12",
+]
+# 최정빈 담당 — MVP UI
+frontend = [
+    "streamlit>=1.39",
+]
+# 개발 도구
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.7",
+    "mypy>=1.13",
+    "ipykernel>=6.29",
+]
+
+# ------------------------------------------------------------------
+# 패키지 탐색 (src layout + config 예외)
+# `where`에 두 경로를 지정해서 src/ 하위 패키지 + 루트 config/ 모두 인식
+# ------------------------------------------------------------------
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = [
+    "core*",
+    "providers*",
+    "db*",
+    "ingestion*",
+    "rag*",
+    "api*",
+    "eval*",
+    "config*",
+]
+exclude = [
+    "tests*",
+    "scripts*",
+    "frontend*",
+    "data*",
+    "notebooks*",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]  # line length은 포매터가 처리
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true

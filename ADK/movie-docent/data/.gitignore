@@ -1,0 +1,61 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+build/
+dist/
+
+# ---- 가상환경 ----
+.venv/
+venv/
+env/
+
+# ---- 캐시 / 테스트 ----
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---- 환경변수 (민감 정보) ----
+.env
+.env.local
+.env.*.local
+
+# ---- 데이터 (크롤링 결과 등) ----
+data/
+!data/.gitkeep
+
+# ---- 노트북 체크포인트 ----
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ---- IDE / 에디터 ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 로그 ----
+*.log
+logs/
+
+# ---- Playwright (이경욱 영역) ----
+playwright-report/
+test-results/
+.playwright/
+
+# ---- 모델 캐시 (Gemma 로컬 실행 시) ----
+models/
+*.gguf
+*.safetensors
