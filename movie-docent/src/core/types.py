@@ -66,17 +66,19 @@ class Movie(BaseModel):
     """
     model_config = ConfigDict(from_attributes=True)
 
-    id: int                                   # TMDB ID 사용 권장
+    movie_id: int                             # id -> movie_id
     title: str                                # 한국어 제목
-    original_title: Optional[str] = None
+    title_en: Optional[str] = None            # 추가: 영문 제목
+    genre: Optional[str] = None               # genres(list) -> genre(str 쉼표 구분)
     director: Optional[str] = None
-    cast: list[str] = Field(default_factory=list)
-    genres: list[Genre] = Field(default_factory=list)
-    overview: Optional[str] = None            # 줄거리
     release_date: Optional[date] = None
-    runtime_min: Optional[int] = None
+    tmdb_rating: Optional[float] = None       # rating_avg -> tmdb_rating
+    tmdb_id: Optional[int] = None             # 추가
+    kobis_id: Optional[str] = None            # 추가
+    cast_members: Optional[str] = None        # cast(list) -> cast_members(str 쉼표 구분)
+    overview: Optional[str] = None            # 줄거리
     poster_url: Optional[str] = None
-    rating_avg: Optional[float] = None        # TMDB 평균 평점
+    age_rating: Optional[str] = None          # 추가: 관람 등급
 
     # 기획안 §2.4 분류 축
     is_polarizing: bool = False               # 호불호 뚜렷
@@ -91,37 +93,33 @@ class Review(BaseModel):
     `tagger_version`은 모델 교체 시 추적용. 같은 리뷰가 다른 버전의 Gemma로
     재태깅될 수 있으므로 A/B 비교나 롤백 시 필수.
     """
-    model_config = ConfigDict(from_attributes=True)
+    review_id: int                            # id -> review_id
+    movie_id: int                             # FK to Movie
+    reviewer_nickname: Optional[str] = None   # author -> reviewer_nickname
+    rating: Optional[float] = None            # 별점
+    likes_count: int = 0                      # 추가: 좋아요 수
+    comments_count: int = 0                   # 추가: 댓글 수
+    content: str                              # text -> content
+    sort_type: Optional[str] = None           # 추가: 수집 기준
+    is_spoiler: bool = False                  # 추가: 스포일러 여부
+    collected_at: Optional[datetime] = None   # written_at/crawled_at -> collected_at
 
-    id: int
-    movie_id: int                             # FK to Movie.id
-    author: Optional[str] = None
-    rating: Optional[float] = None            # 0.5 ~ 5.0 (Watcha 기준)
-    text: str
-    written_at: Optional[datetime] = None
-
-    # 가공 결과 (Phase 3 이후 채워짐)
-    sentiment: Optional[ReviewSentiment] = None
+    # 가공 결과 (Phase 3 이후 채워짐 - DB의 review_keywords 등으로 분리되나 객체엔 유지)
+    sentiment: Optional[str] = None
     hashtags: list[str] = Field(default_factory=list)
-    tagger_version: Optional[str] = None      # 모델 교체 추적
-
-    # 메타
-    source_url: Optional[str] = None
-    crawled_at: Optional[datetime] = None
+    tagger_version: Optional[str] = None
 
 
 class TMI(BaseModel):
     """TMI(촬영지·비하인드 등). DuckDuckGo 그라운딩 결과 정제본."""
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    tmi_id: int                               # id -> tmi_id
     movie_id: int
-    category: TMICategory
-    text: str
+    category: str                             # TMICategory (문자열로 호환)
+    content: str                              # text -> content
     source_url: Optional[str] = None
-    confidence: Optional[float] = None        # 그라운딩 신뢰도 (옵션)
-    grounded_at: Optional[datetime] = None
-
+    created_at: Optional[datetime] = None     # grounded_at -> created_at
 
 # ============================================================
 # RAG 작업 단위 (그래프 안에서만 사용)
