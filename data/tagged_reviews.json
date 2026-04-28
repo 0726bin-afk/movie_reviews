@@ -1,0 +1,768 @@
+{
+    "F1 더 무비": {
+        "movie_metadata": {
+            "movie_id": "20254501",
+            "title": "F1 더 무비",
+            "title_en": "F1",
+            "release_year": 2025,
+            "openDt": "20250625",
+            "typeNm": "장편",
+            "prdtStatNm": "개봉",
+            "genres": [
+                "드라마",
+                "액션"
+            ],
+            "nations": [
+                "미국"
+            ],
+            "directors": [
+                "조셉 코신스키"
+            ],
+            "actors": [
+                "브래드 피트",
+                "하비에르 바르뎀",
+                "케리 콘든"
+            ],
+            "staffs": [],
+            "companys": [
+                {
+                    "companyCd": "20100043",
+                    "companyNm": "워너브러더스 코리아(주)",
+                    "companyPartNm": "배급사"
+                },
+                {
+                    "companyCd": "20100043",
+                    "companyNm": "워너브러더스 코리아(주)",
+                    "companyPartNm": "수입사"
+                }
+            ],
+            "showTypes": [
+                "디지털",
+                "4D",
+                "IMAX",
+                "ScreenX",
+                "DOLBYCINEMA"
+            ],
+            "age_rating": "12세이상관람가",
+            "overview": "한때 주목받는 유망주였지만 끔찍한 사고로 F1®에서 우승하지 못하고 한순간에 추락한 드라이버 소니 헤이스. 그의 오랜 동료인 루벤 세르반테스에게 레이싱 복귀를 제안받으며 최하위 팀인 APXGP에 합류한다.  그러나 팀 내 떠오르는 천재 드라이버 조슈아 피어스와 소니 헤이스의 갈등은 날이 갈수록 심해지고. 설상가상 우승을 향한 APXGP 팀의 전략 또한 번번이 실패하며 최하위권을 벗어나지 못하고 고전하는데···",
+            "poster_url": "https://image.tmdb.org/t/p/w500/bvVoP1t2gNvmE9ccSrqR1zcGHGM.jpg",
+            "tmdb_rating": 0
+        },
+        "reviews": [
+            {
+                "review_id": "20254501_0",
+                "movie_id": "20254501",
+                "reviewer": "무비신",
+                "rating": 4.0,
+                "likes": 1294,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "극장만이 선사하는 가치, 블록버스터의 존재 이유.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "극장",
+                        "블록버스터",
+                        "영화의 존재 이유",
+                        "영화관 경험"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_1",
+                "movie_id": "20254501",
+                "reviewer": "재원",
+                "rating": 3.5,
+                "likes": 1061,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "영화관의 위기를 우려하는 이들에게 분명하게 증명한다. 극장에서만 체감할 수 있는 쾌감이 여전히 존재한단 것을.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "영화관 위기",
+                        "극장 경험",
+                        "쾌감",
+                        "블록버스터 체감"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_2",
+                "movie_id": "20254501",
+                "reviewer": "이동진 평론가",
+                "rating": 3.0,
+                "likes": 750,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "보이는 그대로 얻는 데서 오는 포만감.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "비주얼좋음"
+                    ],
+                    "search_keywords": [
+                        "포만감",
+                        "시각적 만족",
+                        "영화적 경험"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_3",
+                "movie_id": "20254501",
+                "reviewer": "이진수/(Binary)",
+                "rating": 4.0,
+                "likes": 408,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "스스로에대한 불신을 모두 깨트리고 한계점을 넘어섰을때 비로소 마주하는 고요의 순간들, 오롯이 나로서 존재하는 진실된 시간들 “돈은 안 중요해요.” “그럼 뭐가 중요한데요?” “죽기전에 저 차를 몰 수 있다면 죽어도 상관없어” “내가 지켜볼거야” #평생 자신에 대한 의심과 증명에 대한 목마름으로 살아가다, 끝내 그것을 모두 마주하고 이겨냈을 때. 아무도 방해하지 않고 소음조차 들리지 않는, 오직 나만의 순간을 만끽하게 될 거야. #마침내 해냈을 때, 혼자 조용한 곳에 가서 자기 자신을 되돌아보며 아버지와 함께 찍은 사진을 보는 모습이 좋았다. 자기 자신한테 드디어 떳떳해진 한 사람의 모습 아니었을까. 자기 자신에 대한 후회와 모든 아쉬움, 미련으로부터 벗어나 결국 이 길로 오게 되었구나를 오롯이 마주할 수 있는 순간. “그 순간에는 고요함이 찾아올거다” #브래드 피트에 대한 또 하나의 끝내주는 기억을 가지고 싶다면. #타이어를 빨리 갈아끼울 때 온몸에 소름이 돋는다. #제리 브룩하이머, 조셉 코신스키에 할리우드 최고의 명배우 스타 조합은 그저 믿고 따라가면 된다. (거기다 이전엔 한스 짐머의 음악까지.) #사고 난 그날 이후로 끝없이 찾아 헤매던 건 레이싱에 대한 사랑이었다. 살면서 무언가를 끝없이 사랑할 수 있을까? 나에겐 영화가 그런데, 꼭 지켜내고 싶다. 성취 없이도, 그저 어릴 때 좋아했던 그 마음 그대로. #이 영화는 꼭 흥행적으로 성공했으면 한다 이런 퀄리티의 영화마저 실패한다면 영화 업계엔 성공할 영화가 없다 #쿨해서 멋진 브래드 피트. 언제나 일이 끝나면 박수칠때 떠날줄 알고 다른 사람에게 자리를 넘겨줄 줄 아는 남자 #탑건매버릭처럼 최첨단의 기술을 이용해 고전의 이야기를 더욱 빛나게 #머니볼때도 그렇고 차타고 가는 브래드 피트의 눈빛은 감동이 있다, 우수에 찬 눈빛 #다시 길 위에서 봅시다",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "연기좋음",
+                        "연출좋음",
+                        "서사좋음",
+                        "음악좋음",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "브래드 피트",
+                        "레이싱",
+                        "자기 성찰",
+                        "자아 발견",
+                        "고요함",
+                        "한스 짐머",
+                        "명배우 조합",
+                        "영화적 여정"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_4",
+                "movie_id": "20254501",
+                "reviewer": "pilon",
+                "rating": 4.5,
+                "likes": 343,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "돌비 뽕차서 객관적인 판단은 불가능 시작하자마자 영화관 시트 덜덜 떨려오면서 내 하체도 같이 덜덜 소리 출력 게임 끝ㅡ 그리고 한스짐머 너 내 헬스장 음악감독해.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "음악좋음",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "돌비",
+                        "영화관 체험",
+                        "햅틱",
+                        "진동",
+                        "한스 짐머",
+                        "영화적 몰입"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_5",
+                "movie_id": "20254501",
+                "reviewer": "창민",
+                "rating": 4.0,
+                "likes": 242,
+                "comment_count": 0,
+                "is_spoiler": true,
+                "filter_used": "좋아요 순",
+                "content": "쏘니, 그는 현실에서도 끝내 팀을 우승시켰다👍",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "서사좋음"
+                    ],
+                    "search_keywords": [
+                        "쏘니",
+                        "팀 우승",
+                        "현실적 성공",
+                        "영감"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_6",
+                "movie_id": "20254501",
+                "reviewer": "DarthSkywalker",
+                "rating": 4.5,
+                "likes": 237,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "자신의 존재와 가치가 인정받을 때만큼 심장이 뛰는 순간이 있을까.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "서사좋음",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "존재 가치",
+                        "인정",
+                        "심장 박동",
+                        "감정적 깊이",
+                        "성취감"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_7",
+                "movie_id": "20254501",
+                "reviewer": "김호산",
+                "rating": 4.5,
+                "likes": 223,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "‘보고싶어요’ 말고 ‘진짜 미치도록 ㅈㄴ보고싶어요’ 버튼은 없나요?⠀ F1 머신 만큼이나 잘빠지고 깔끔함 위에 더한 판타지 3번봐도 한스짐머의 음악위로 실버스톤을 달리는 F1 머신의 첫등장 씬에서 벅차오름… 4차 관람각🤙🏻 ## 4DX강추 ## F1팬들이 한번쯤 상상 하던것들을 빵형이 직접 실현시켜줌",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "음악좋음",
+                        "분위기좋음",
+                        "장르특성"
+                    ],
+                    "search_keywords": [
+                        "F1",
+                        "실버스톤",
+                        "한스 짐머",
+                        "4DX",
+                        "레이싱",
+                        "벅차오름",
+                        "재관람"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_8",
+                "movie_id": "20254501",
+                "reviewer": "영화 볼 결심",
+                "rating": 3.5,
+                "likes": 193,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "<탑건: 매버릭>에 이어 자신의 장기가 뭔지 톡톡히 각인시켜주는 코신스키 감독",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "연출좋음",
+                        "서사좋음"
+                    ],
+                    "search_keywords": [
+                        "탑건 매버릭",
+                        "코신스키 감독",
+                        "연출력",
+                        "장기 각인",
+                        "영화적 영향력"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_9",
+                "movie_id": "20254501",
+                "reviewer": "뭅먼트",
+                "rating": 3.5,
+                "likes": 189,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "\"그럼 뭐가 중요한데요?\" 두 사람의 내면적 성장 영화이면서 '팀 스포츠'를 강조하는 영화. 시원한 질주와 뜨거운 적막으로 눈과 귀를 사로잡는다.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "서사좋음",
+                        "연출좋음",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "내면적 성장",
+                        "팀 스포츠",
+                        "질주",
+                        "적막",
+                        "서사",
+                        "감동"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_10",
+                "movie_id": "20254501",
+                "reviewer": "Dh",
+                "rating": 4.0,
+                "likes": 188,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "심장이 멈추기 전까지는 놓을 수 없는 가속 질주 🏁 #영원한 간지 빵형👍 #CGV IMAX",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "가속",
+                        "질주",
+                        "영화",
+                        "IMAX",
+                        "속도",
+                        "액션"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_11",
+                "movie_id": "20254501",
+                "reviewer": "OLSTA",
+                "rating": 4.5,
+                "likes": 184,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "포드 vs 페라리랑 비교하려 했는데 아예 다른 결의 작품이다. 마치 대한민국의 쇼트트랙 경기를 보는 거 같다. 고막을 울리는 엔진 소리, 그리고 브래드 피트의 목소리",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "음악좋음"
+                    ],
+                    "search_keywords": [
+                        "포드",
+                        "페라리",
+                        "쇼트트랙",
+                        "엔진 소리",
+                        "브래드 피트",
+                        "레이싱"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_12",
+                "movie_id": "20254501",
+                "reviewer": "MayDay",
+                "rating": 3.5,
+                "likes": 148,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "“열광하는 굉음, 폭주하는 낭만 그리고 붕 뜨는 심장” 잘 알지도 못하는 스포츠에 이렇게나 내가 도파민이 터져 흥분할 일인가 싶은데, F1에 대해 아무것도 모르는 뉴비들을 위한 어느정도의 설명과 또 막상 설명이 필요없이 인물의 서사와 성장을 위한 스토리라 크게 걱정할 필요가 없었기 때문이라 추측해본다. ‘프로 레이싱’이라는 종목 자체가 가질 수 있는 장점들을 모아 프로 연출가들이 그것을 표현해내니 영화가 가지는 폭발적인 에너지는 더욱 예열되어 관객들의 마음과 접지한다. 어떻게 바라보면 그저 예상 가능한 기승전결에 맞게 떨어진 스토리이지만 그 흐름의 속도를 레이싱 하는것처럼 내달리다보니 2시간 30분의 시간이 조금은 짧게 느껴졌다. 아직은 어린 ‘조슈아’와 한 번 무너진 경험이 있는 ‘소니’. 두 인물의 내면적 성장과 팀워크로서의 시너지의 강함을 전략적으로 잘 풀어나갔음을 볼 수 있었고, 여러 징크스를 가지며 카드 한 장에도 심리적으로 흔들리는 ‘소니’의 인간적인 면모는 이겨낸다기 보다는 평소와 다르지 않고 오히려 인생을 완주할때까지 끝까지 안고갈, 이것마저 전략처럼 보였다. 레이싱 카에 탄것처럼 보이는 시각적인 속도와 가득찬 사운드가 이 영화의 최고 장점이라 생각하며, 무사히 완주했을때의 그 붕 뜬 느낌을 같이 느끼는 것 같아 좋았다. 하늘에는 ‘톰 크루즈’가 땅에는 ‘브래드 피트’가 둘이서 다 하는 중.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "연출좋음",
+                        "서사좋음",
+                        "비주얼좋음",
+                        "음악좋음",
+                        "분위기좋음",
+                        "연기좋음"
+                    ],
+                    "search_keywords": [
+                        "F1",
+                        "레이싱",
+                        "도파민",
+                        "속도",
+                        "팀워크",
+                        "성장",
+                        "브래드 피트",
+                        "톰 크루즈",
+                        "시너지"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_13",
+                "movie_id": "20254501",
+                "reviewer": "윤제아빠",
+                "rating": 4.0,
+                "likes": 138,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "돈만 넉넉하면 이렇게 만들 수 있을까? 뻔하게 가지만 그래서 또 재밌지.아냐? . . #아무리줘도난못한다고본다 #오랜만에영화가기분이좋네 #코신스키는sf영화하지마라",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체복합",
+                        "서사좋음"
+                    ],
+                    "search_keywords": [
+                        "뻔하게",
+                        "재미",
+                        "영화",
+                        "코신스키",
+                        "SF영화",
+                        "예측 가능한 스토리"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_14",
+                "movie_id": "20254501",
+                "reviewer": "상원",
+                "rating": 5.0,
+                "likes": 115,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "제육볶음! 돈가스! 국밥! 공룡! 변신로봇! 탱크! 전투기! 그리고. 포뮬러 원!",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체복합",
+                        "주의사항"
+                    ],
+                    "search_keywords": [
+                        "제육볶음",
+                        "돈가스",
+                        "국밥",
+                        "공룡",
+                        "변신로봇",
+                        "탱크",
+                        "전투기",
+                        "포뮬러 원"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": true,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_15",
+                "movie_id": "20254501",
+                "reviewer": "임희봉",
+                "rating": 4.0,
+                "likes": 115,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "속도의 쾌감과 전략의 짜릿함! 영화 속 모든 순간들이 도파민으로 가득하다",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "속도의 쾌감",
+                        "전략",
+                        "짜릿함",
+                        "도파민",
+                        "영화 경험"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_16",
+                "movie_id": "20254501",
+                "reviewer": "rendezvous",
+                "rating": 4.5,
+                "likes": 111,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "블록버스터 영화가 존재하는 이유 그리고 영화관을 가야하는 이유를 또 한번 잘 보여준 조셉 코신스키 감독의 작품! F1의 몰입감과 재미를 여실히 느끼게 해준, 제대로 잘 만들어진 상업영화이다. 사운드가 좋은 영화관에서 보면 특히 레이싱 장면에선 눈을 뗄 수가 없고 자연스레 숨을 참고 장면들을 바라볼 정도로 긴장감과 몰입감을 선사해준다. 스토리는 살짝 진부할 수도 있지만, 잘 구현된 레이싱 장면들이 이를 상쇄시켜준다. 브래드 피트, 하비에르 바르뎀 등 배우들의 연기 또한 이에 더 자연스럽게 녹아들게 하도록 잘 표현되었다. 영화관에서 다시한번 보고싶은 영화가 오랜만에 나왔다. 우리들이 영화관을 가는 여러가지 이유 중 하나를 여실히 잘 보여준, 누구나 즐길 수 있는 블록버스터 영화의 정석이었다. [롯데시네마 홍대입구 5관 25. 6. 28.(토) 14:50] [2025. 6. 25. 대개봉] [2025년 #007]",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "연출좋음",
+                        "분위기좋음",
+                        "연기좋음"
+                    ],
+                    "search_keywords": [
+                        "블록버스터",
+                        "조셉 코신스키",
+                        "F1",
+                        "몰입감",
+                        "상업영화",
+                        "레이싱 장면",
+                        "브래드 피트",
+                        "영화관"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_17",
+                "movie_id": "20254501",
+                "reviewer": "리얼리스트",
+                "rating": 4.0,
+                "likes": 110,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "여성관객도 열광하겠지만 남성관객이라면 끓어오르고 열광하게할만한 아드레날린이 농축된 이미지와 이야기 (웬만하면 특별관에서 경험해야 하는 영화)",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체긍정",
+                        "분위기좋음"
+                    ],
+                    "search_keywords": [
+                        "아드레날린",
+                        "특별관",
+                        "여성관객",
+                        "남성관객",
+                        "영화 이야기"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_18",
+                "movie_id": "20254501",
+                "reviewer": "주+혜",
+                "rating": 3.5,
+                "likes": 109,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "'잠깐 자릴 비우면 이 난리를 만든단 말이야' 같은 대사 쓰지 않기. 브래드피트를 캐스팅 했다면 더더욱. 첫대사는 느끼했지만 그래도 빵발은 맛있고 하비에르바르뎀이 핫해요.",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체복합",
+                        "연기좋음"
+                    ],
+                    "search_keywords": [
+                        "브래드피트",
+                        "하비에르 바르뎀",
+                        "대사",
+                        "캐스팅",
+                        "빵발"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            },
+            {
+                "review_id": "20254501_19",
+                "movie_id": "20254501",
+                "reviewer": "김호진 펠릭스",
+                "rating": 3.5,
+                "likes": 100,
+                "comment_count": 0,
+                "is_spoiler": false,
+                "filter_used": "좋아요 순",
+                "content": "회색 지대의 꼰대가 꼴통들에게 떠먹여주는 제로의 영역, 석연찮지만 느끼긴 했어 드라이버스 하이",
+                "meta_tags": {
+                    "title": "F1 더 무비",
+                    "year": 2025,
+                    "genres": [
+                        "드라마",
+                        "액션"
+                    ],
+                    "age_rating": "12세이상관람가",
+                    "content_character": [
+                        "전체부정",
+                        "서사나쁨"
+                    ],
+                    "search_keywords": [
+                        "회색 지대",
+                        "꼰대",
+                        "꼴통",
+                        "제로의 영역",
+                        "드라이버스",
+                        "비판"
+                    ],
+                    "is_tmi": false,
+                    "has_warning": false,
+                    "analysis_method": "Local-LLM"
+                }
+            }
+        ]
+    }
+}
