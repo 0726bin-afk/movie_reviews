@@ -1,66 +1,49 @@
 """
 retrieve 노드 — 질문에 관련된 문서 검색.
 
-Phase 3 현재: fake retriever — fixture 파일에서 영화 정보 + 리뷰 N건 반환.
-Phase 3.5: `rag.retrievers.self_query.SelfQueryRetriever`로 교체
-          (DB + pgvector + Gemini Self-Query 메타데이터 필터)
+Phase 5: query_type별로 적합한 소스를 다르게 선택.
 
-state -> state 시그니처.
-입력: question, target_movie (옵션), query_type (옵션)
-출력: retrieved_docs (+ latency_ms 갱신)
+  basic_info     -> movies + 인기 리뷰 3건
+  review_summary -> self_query (review_embeddings)
+  polarity       -> self_query
+  tmi            -> movie_tmi 테이블
+  recommendation -> self_query
+
+DB 연결 실패·schema 미준비 시: 빈 리스트 반환. 그래프 멈추지 않음.
+state -> state. async.
 """
 from __future__ import annotations
 
-import json
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING
 
+from config.settings import settings
 from core.types import RetrievedDoc
 
 if TYPE_CHECKING:
     from rag.state import QueryState
 
 
-# ============================================================
-# Fixture 경로 — repo root / tests / fixtures / sample_reviews.json
-# ============================================================
-# __file__ → .../src/rag/nodes/retrieve.py
-# parents[0]=nodes, [1]=rag, [2]=src, [3]=movie-docent (repo root)
-FIXTURE_PATH = (
-    Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "sample_reviews.json"
-)
+async def _retrieve_basic_info(target_movie):
+    """basic_info: 영화 메타 1건 + 인기 리뷰 3건."""
+    if not target_movie:
+        return []
 
+    from db.repositories import movies_repo, reviews_repo
 
-def _load_fixture() -> dict:
-    if not FIXTURE_PATH.exists():
-        raise FileNotFoundError(
-            f"Fixture not found: {FIXTURE_PATH}\n"
-            f"Phase 3 retrieve는 fixture에 의존. tests/fixtures/sample_reviews.json 확인."
-        )
-    with FIXTURE_PATH.open(encoding="utf-8") as f:
-        return json.load(f)
+    movie = await movies_repo.find_by_title(target_movie)
+    if not movie:
+        return []
 
+    docs = []
 
-def _fake_search(question: str, target_movie: str | None = None) -> list[RetrievedDoc]:
-    """
-    Fixture에서 movie + reviews를 RetrievedDoc 리스트로 반환.
-
-    Phase 3.5에서 이 함수 자리에 self-query retriever 호출이 들어옴.
-    질문 내용 무관하게 fixture를 그대로 반환 (검색 품질은 Phase 3.5+ 작업).
-    """
-    data = _load_fixture()
-    movie = data["movie"]
-    reviews = data["reviews"]
-
-    docs: list[RetrievedDoc] = []
-
-    # ---- 영화 정보 doc ----
+    overview = movie.get("overview") or ""
     movie_text = (
-        f"{movie['title']} — 감독 {movie['director']}, "
-        f"개봉 {movie['release_date']}, 장르 {movie['genre']}. "
-        f"출연: {movie['cast_members']}. "
-        f"줄거리: {movie['overview']}"
+        f"{movie['title']} — 감독 {movie.get('director') or '?'}, "
+        f"개봉 {movie.get('release_date') or '?'}, "
+        f"장르 {movie.get('genre') or '?'}. "
+        f"출연: {movie.get('cast_members') or '?'}. "
+        f"줄거리: {overview}"
     )
     docs.append(RetrievedDoc(
         text=movie_text,
@@ -69,38 +52,95 @@ def _fake_search(question: str, target_movie: str | None = None) -> list[Retriev
         score=1.0,
         metadata={
             "title": movie["title"],
-            "director": movie["director"],
-            "release_date": movie["release_date"],
-            "tmdb_rating": movie.get("tmdb_rating"),
+            "director": movie.get("director"),
+            "release_date": str(movie.get("release_date")) if movie.get("release_date") else None,
+            "genre": movie.get("genre"),
+            "tmdb_rating": float(movie["tmdb_rating"]) if movie.get("tmdb_rating") else None,
         },
     ))
 
-    # ---- 리뷰 docs ----
+    reviews = await reviews_repo.get_top_reviews(movie["movie_id"], limit=3)
     for r in reviews:
         docs.append(RetrievedDoc(
             text=r["content"],
             source="review",
             source_id=r["review_id"],
-            score=0.85,  # fake score
+            score=0.7,
             metadata={
                 "title": movie["title"],
-                "reviewer_nickname": r["reviewer_nickname"],
-                "rating": r["rating"],
-                "likes_count": r["likes_count"],
+                "reviewer_nickname": r.get("reviewer_nickname"),
+                "rating": float(r["rating"]) if r.get("rating") else None,
+                "likes_count": r.get("likes_count"),
             },
         ))
-
     return docs
 
 
-def retrieve(state: "QueryState") -> "QueryState":
-    """질문 → 관련 문서 리스트."""
+async def _retrieve_via_self_query(question, target_movie, top_k):
+    """review_summary / polarity / recommendation 공통 — self_query 사용."""
+    try:
+        from rag.retrievers import self_query
+        return await self_query.search(
+            question=question,
+            target_movie=target_movie,
+            top_k=top_k,
+        )
+    except Exception:
+        return []
+
+
+async def _retrieve_tmi(target_movie):
+    """tmi: movie_tmi 테이블 SELECT. 결과 0건이면 graph가 ground로 라우팅."""
+    if not target_movie:
+        return []
+
+    from db.repositories import movies_repo, tmi_repo
+
+    movie = await movies_repo.find_by_title(target_movie)
+    if not movie:
+        return []
+
+    rows = await tmi_repo.list_tmi(movie["movie_id"])
+    docs = []
+    for row in rows:
+        docs.append(RetrievedDoc(
+            text=row["content"],
+            source="tmi",
+            source_id=row["tmi_id"],
+            score=0.9,
+            metadata={
+                "title": movie["title"],
+                "category": row["category"],
+                "source_url": row.get("source_url"),
+            },
+        ))
+    return docs
+
+
+async def retrieve(state):
+    """query_type 분기 → 적합한 소스 검색."""
     t0 = time.perf_counter()
 
     question = state.get("question", "")
     target = state.get("target_movie")
+    query_type = state.get("query_type") or "basic_info"
+    top_k = settings.RETRIEVER_TOP_K
 
-    docs = _fake_search(question, target_movie=target)
+    try:
+        if query_type == "basic_info":
+            docs = await _retrieve_basic_info(target)
+            if not docs:
+                docs = await _retrieve_via_self_query(question, target, top_k)
+        elif query_type in ("review_summary", "polarity"):
+            docs = await _retrieve_via_self_query(question, target, top_k)
+        elif query_type == "tmi":
+            docs = await _retrieve_tmi(target)
+        elif query_type == "recommendation":
+            docs = await _retrieve_via_self_query(question, None, top_k)
+        else:
+            docs = await _retrieve_via_self_query(question, target, top_k)
+    except Exception:
+        docs = []
 
     latency = (time.perf_counter() - t0) * 1000
     return {

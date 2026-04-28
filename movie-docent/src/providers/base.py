@@ -17,25 +17,11 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterator, Sequence
 
 
-# ============================================================
-# 메시지 타입 (간단 dict 형태로 통일)
-# ============================================================
-# LangChain BaseMessage에 의존하지 않기 위해 dict 형태로 받음.
-# 예: [{"role": "system", "content": "..."}, {"role": "user", "content": "..."}]
-# 단순 string도 받음 (자동으로 user 메시지로 처리).
 PromptInput = str | list[dict]
 
 
-# ============================================================
-# LLMProvider
-# ============================================================
-
 class LLMProvider(ABC):
-    """
-    LLM 추상화. 답 생성용.
-
-    구현체는 LangChain의 BaseChatModel을 내부에 들고, 메소드 4개를 위임 호출.
-    """
+    """LLM 추상화. 답 생성용."""
 
     @abstractmethod
     def invoke(self, prompt: PromptInput) -> str:
@@ -49,32 +35,23 @@ class LLMProvider(ABC):
 
     @abstractmethod
     def stream(self, prompt: PromptInput) -> Iterator[str]:
-        """동기 스트리밍. 토큰(또는 청크) 단위 yield."""
+        """동기 스트리밍."""
         ...
 
     @abstractmethod
     def astream(self, prompt: PromptInput) -> AsyncIterator[str]:
-        """비동기 스트리밍. FastAPI SSE 응답에 사용."""
+        """비동기 스트리밍."""
         ...
 
     @property
     @abstractmethod
     def model_name(self) -> str:
-        """현재 모델 식별자 (로깅·메트릭용). 예: 'gemini-1.5-pro-002'"""
+        """현재 모델 식별자 (로깅용)."""
         ...
 
 
-# ============================================================
-# EmbeddingProvider
-# ============================================================
-
 class EmbeddingProvider(ABC):
-    """
-    텍스트 → 벡터 변환 추상화.
-
-    `dimension`은 DB schema의 vector 컬럼 차원과 반드시 일치해야 함.
-    모델 교체로 차원이 달라지면 `scripts/reembed.py`로 무중단 스왑.
-    """
+    """텍스트 → 벡터 변환 추상화."""
 
     @abstractmethod
     def embed_query(self, text: str) -> list[float]:
@@ -83,7 +60,17 @@ class EmbeddingProvider(ABC):
 
     @abstractmethod
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
-        """여러 문서 일괄 임베딩 (배치 효율)."""
+        """여러 문서 일괄 임베딩."""
+        ...
+
+    @abstractmethod
+    async def aembed_query(self, text: str) -> list[float]:
+        """단일 쿼리 비동기 임베딩."""
+        ...
+
+    @abstractmethod
+    async def aembed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        """여러 문서 비동기 일괄 임베딩."""
         ...
 
     @property
@@ -97,30 +84,12 @@ class EmbeddingProvider(ABC):
     def model_name(self) -> str: ...
 
 
-# ============================================================
-# TaggerProvider
-# ============================================================
-
 class TaggerProvider(ABC):
-    """
-    리뷰 해시태그 추출 추상화 (Gemma 등 OSS).
-
-    `version` 속성은 DB의 `reviews.tagger_version`과 매칭됨.
-    모델 교체 시 반드시 다른 문자열로 바꿔서 A/B 비교·롤백 가능하게 유지.
-    """
+    """리뷰 해시태그 추출 추상화 (Gemma 등 OSS)."""
 
     @abstractmethod
     def tag(self, review_text: str, movie_context: dict | None = None) -> list[str]:
-        """
-        리뷰 1건의 해시태그 리스트 반환.
-
-        Args:
-            review_text: 리뷰 원문
-            movie_context: {"title": ..., "genres": [...]} 등 보조 정보 (선택)
-
-        Returns:
-            ["#연기호평", "#감정몰입", ...] — `tagging/prompts.py` 화이트리스트 내
-        """
+        """리뷰 1건의 해시태그 리스트 반환."""
         ...
 
     def tag_batch(
@@ -128,10 +97,7 @@ class TaggerProvider(ABC):
         review_texts: Sequence[str],
         movie_context: dict | None = None,
     ) -> list[list[str]]:
-        """
-        배치 처리. 기본 구현은 순차 호출.
-        구현체가 override해서 진짜 배치 추론으로 최적화 권장.
-        """
+        """배치 처리. 기본 구현은 순차 호출."""
         return [self.tag(t, movie_context) for t in review_texts]
 
     @property
@@ -141,5 +107,5 @@ class TaggerProvider(ABC):
     @property
     @abstractmethod
     def version(self) -> str:
-        """tagger_version DB 필드용. 모델·프롬프트 변경 시 반드시 변경."""
+        """tagger_version DB 필드용. 모델·프롬프트 변경 시 변경."""
         ...

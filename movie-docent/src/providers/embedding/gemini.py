@@ -38,6 +38,13 @@ class GeminiEmbedding(EmbeddingProvider):
     def embed_documents(self, texts: Sequence[str]) -> list[list[float]]:
         return self._client.embed_documents(list(texts))
 
+    async def aembed_query(self, text: str) -> list[float]:
+        # GoogleGenerativeAIEmbeddings에 aembed_query가 있음
+        return await self._client.aembed_query(text)
+
+    async def aembed_documents(self, texts: Sequence[str]) -> list[list[float]]:
+        return await self._client.aembed_documents(list(texts))
+
     @property
     def dimension(self) -> int:
         return self._dimension
