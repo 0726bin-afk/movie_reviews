@@ -1,7 +1,7 @@
 -- ============================================================
 --  영화 도슨트 챗봇 — DB 스키마
 --  DB: Supabase (PostgreSQL)
---  최종 업데이트: 2026-04-27
+--  최종 업데이트: 2026-04-28
 -- ============================================================
 
 -- pgvector 확장 활성화 (Supabase 대시보드 → Extensions → vector 에서도 가능)
@@ -25,6 +25,10 @@ CREATE TABLE movies (
     overview     TEXT,                     -- 줄거리 (TMDB overview)
     poster_url   VARCHAR(500),             -- 포스터 이미지 URL (TMDB)
     age_rating   VARCHAR(50),              -- 관람 등급 (12세이상관람가 등)
+    -- Self-Query 필터용 메타데이터 (RAG팀 요청)
+    is_polarizing BOOLEAN DEFAULT FALSE,   -- 호불호 갈리는 영화 여부
+    is_complex    BOOLEAN DEFAULT FALSE,   -- 복잡한 서사 / 난해한 영화 여부
+    has_rich_tmi  BOOLEAN DEFAULT FALSE,   -- TMI 풍부 여부 (5카테고리 모두 보유 시 TRUE)
     created_at   TIMESTAMP DEFAULT NOW()
 );
 
@@ -75,14 +79,24 @@ CREATE INDEX idx_tmi_category ON movie_tmi(category);
 --  4. 챗봇 QA 로그 (캐싱 및 대화 기록)
 -- ============================================================
 CREATE TABLE qa_log (
-    log_id     SERIAL PRIMARY KEY,
-    question   TEXT NOT NULL,
-    answer     TEXT NOT NULL,
-    sources    TEXT,                        -- 참조 출처 (선택)
-    created_at TIMESTAMP DEFAULT NOW()
+    log_id            SERIAL PRIMARY KEY,
+    question          TEXT NOT NULL,
+    answer            TEXT NOT NULL,
+    sources           TEXT,                 -- 참조 출처 (선택)
+    -- 이중 레이어 캐시용 (요구사항 2)
+    question_embedding vector(768),         -- gemini-embedding-001 임베딩 (의미 유사도 캐시)
+    -- RAG 성능 모니터링 (요구사항 3)
+    trace_id          VARCHAR(100),         -- LangGraph 트레이스 ID
+    latency_info      JSONB,                -- 노드별 소요 시간 예: {"retriever": 0.3, "llm": 1.2}
+    query_type        VARCHAR(50),          -- 질의 유형 5종 분류 결과
+    created_at        TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_qa_question ON qa_log(question);
+-- HNSW 인덱스: 텍스트가 달라도 의미 유사 질문 캐시 히트 (요구사항 2)
+CREATE INDEX idx_qa_question_embedding ON qa_log
+    USING hnsw (question_embedding vector_cosine_ops)
+    WITH (m = 16, ef_construction = 64);
 
 
 -- ============================================================
@@ -149,6 +163,60 @@ CREATE TABLE movie_flags (
 
 CREATE INDEX idx_flags_movie_id  ON movie_flags(movie_id);
 CREATE INDEX idx_flags_flag_type ON movie_flags(flag_type);
+
+
+-- ============================================================
+--  8. LangGraph Checkpointer (멀티턴 대화 상태 저장, 요구사항 1)
+--     langgraph-checkpoint-postgres SDK 기본 요구 스키마
+-- ============================================================
+CREATE TABLE IF NOT EXISTS checkpoints (
+    thread_id            TEXT    NOT NULL,
+    checkpoint_ns        TEXT    NOT NULL DEFAULT '',
+    checkpoint_id        TEXT    NOT NULL,
+    parent_checkpoint_id TEXT,
+    type                 TEXT,
+    checkpoint           JSONB   NOT NULL,
+    metadata             JSONB   NOT NULL DEFAULT '{}',
+    PRIMARY KEY (thread_id, checkpoint_ns, checkpoint_id)
+);
+
+CREATE TABLE IF NOT EXISTS checkpoint_blobs (
+    thread_id     TEXT  NOT NULL,
+    checkpoint_ns TEXT  NOT NULL DEFAULT '',
+    channel       TEXT  NOT NULL,
+    version       TEXT  NOT NULL,
+    type          TEXT  NOT NULL,
+    blob          BYTEA,
+    PRIMARY KEY (thread_id, checkpoint_ns, channel, version)
+);
+
+CREATE TABLE IF NOT EXISTS checkpoint_writes (
+    thread_id     TEXT    NOT NULL,
+    checkpoint_ns TEXT    NOT NULL DEFAULT '',
+    checkpoint_id TEXT    NOT NULL,
+    task_id       TEXT    NOT NULL,
+    idx           INTEGER NOT NULL,
+    channel       TEXT    NOT NULL,
+    type          TEXT,
+    blob          BYTEA   NOT NULL,
+    PRIMARY KEY (thread_id, checkpoint_ns, checkpoint_id, task_id, idx)
+);
+
+
+-- ============================================================
+--  9. 모델 평가셋 (50문항 정답률 측정용, 요구사항 5)
+-- ============================================================
+CREATE TABLE eval_set (
+    eval_id          SERIAL PRIMARY KEY,
+    question         TEXT         NOT NULL,           -- 평가 질문
+    expected_answer  TEXT         NOT NULL,           -- 예상 정답 (정성 or 정량)
+    movie_id         INT REFERENCES movies(movie_id), -- 관련 영화 (없으면 NULL)
+    query_type       VARCHAR(50),                     -- 질의 유형 5종 분류
+    created_at       TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_eval_movie_id   ON eval_set(movie_id);
+CREATE INDEX idx_eval_query_type ON eval_set(query_type);
 
 
 -- ============================================================
