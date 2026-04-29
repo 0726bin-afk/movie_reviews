@@ -60,12 +60,19 @@ async def get_pool() -> asyncpg.Pool:
     """전역 connection pool 반환. 첫 호출 시 lazy 초기화."""
     global _pool
     if _pool is None:
+        # DSN 주소를 변수에 담고 출력해봐
+        dsn = _build_dsn()
+        print(f"\n{'='*50}")
+        print(f"[DB 접속 시도 주소]: {dsn}")
+        print(f"{'='*50}\n")
+        
         _pool = await asyncpg.create_pool(
-            dsn=_build_dsn(),
+            dsn=dsn,
             min_size=2,
             max_size=10,
             command_timeout=30,
             init=_init_connection,
+            statement_cache_size=0,
         )
     return _pool
 
