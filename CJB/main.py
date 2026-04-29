@@ -1,12 +1,14 @@
 import os
 import time
 import warnings
+import requests
 import psycopg2
 import psycopg2.extras
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from groq import Groq
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 import google.generativeai as genai
@@ -39,6 +41,17 @@ def get_conn():
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+
+# Groq (채팅 답변용 — 무료)
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+GROQ_MODEL  = "llama-3.3-70b-versatile"
+
+# TMDB
+TMDB_KEY  = os.getenv("TMDB_API_KEY")
+TMDB_BASE = "https://api.themoviedb.org/3"
+
+# 이 키워드가 포함되면 TMDB 필모그래피 조회
+TMDB_TRIGGER = ["다른 영화", "다른 작품", "전작", "필모그래피", "출연작", "감독 작품", "감독 영화"]
 
 
 # ============================================================
@@ -217,14 +230,162 @@ def run_grounding(req: GroundingRequest):
 
 
 # ============================================================
-#  6. 챗봇 Q&A (캐시 → 메타데이터 답변 → RAG 연동 예정)
+#  6. 챗봇 헬퍼
 # ============================================================
 
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+
+def fetch_serpapi_context(movie_title: str, question: str) -> str:
+    """SerpAPI로 '{영화제목} {질문}' 구글 검색 → 상위 스니펫 반환"""
+    try:
+        from serpapi import GoogleSearch
+        search = GoogleSearch({
+            "q": f"{movie_title} {question}",
+            "api_key": SERPAPI_KEY,
+            "hl": "ko",
+            "gl": "kr",
+            "num": 5,
+        })
+        results = search.get_dict()
+        snippets = []
+        for r in results.get("organic_results", [])[:5]:
+            title   = r.get("title", "")
+            snippet = r.get("snippet", "")
+            if snippet:
+                snippets.append(f"- {title}: {snippet}")
+        return "\n".join(snippets)
+    except Exception:
+        return ""
+
+
+def ask_groq(prompt: str) -> str:
+    resp = groq_client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[
+            {
+                "role": "system",
+                "content": "당신은 한국어 영화 전문 도슨트입니다. 반드시 순수한 한국어로만 답변하세요. 한자, 중국어, 일본어 문자를 절대 사용하지 마세요."
+            },
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,
+        max_tokens=1024,
+    )
+    return resp.choices[0].message.content.strip()
+
+
+def tmdb_get(path: str, **params) -> dict:
+    res = requests.get(
+        f"{TMDB_BASE}/{path}",
+        params={"api_key": TMDB_KEY, "language": "ko-KR", **params},
+        timeout=10,
+    )
+    return res.json()
+
+
+def fetch_director_filmography(tmdb_id: int) -> tuple:
+    """감독 필모그래피 — (이름, 영화 목록)"""
+    credits = tmdb_get(f"movie/{tmdb_id}/credits")
+    director = next((c for c in credits.get("crew", []) if c.get("job") == "Director"), None)
+    if not director:
+        return "", []
+    person_id = director["id"]
+    name = director["name"]
+    data = tmdb_get(f"person/{person_id}/movie_credits")
+    films = sorted(
+        [m for m in data.get("crew", [])
+         if m.get("job") == "Director" and m.get("title") and m.get("release_date")],
+        key=lambda x: x.get("release_date", ""), reverse=True
+    )[:10]
+    return name, films
+
+
+def fetch_actor_filmography(tmdb_id: int, actor_name: str = None) -> tuple:
+    """배우 필모그래피 — (이름, 영화 목록). actor_name 지정 시 해당 배우 우선"""
+    credits = tmdb_get(f"movie/{tmdb_id}/credits")
+    cast = credits.get("cast", [])
+    if actor_name:
+        person = next((c for c in cast if actor_name in c.get("name", "")), None) or (cast[0] if cast else None)
+    else:
+        person = cast[0] if cast else None
+    if not person:
+        return "", []
+    person_id = person["id"]
+    name = person["name"]
+    data = tmdb_get(f"person/{person_id}/movie_credits")
+    films = sorted(
+        [m for m in data.get("cast", []) if m.get("title") and m.get("release_date")],
+        key=lambda x: x.get("release_date", ""), reverse=True
+    )[:10]
+    return name, films
+
+
+def fetch_tmdb_extra(tmdb_id: int) -> list:
+    """TMDB에서 OTT·흥행·키워드·유사영화 조회 → 컨텍스트 라인 리스트 반환"""
+    lines = []
+    try:
+        # 상세 정보 (흥행 수익·제작비·런타임·태그라인)
+        detail = tmdb_get(f"movie/{tmdb_id}")
+        if detail.get("runtime"):
+            lines.append(f"러닝타임: {detail['runtime']}분")
+        if detail.get("tagline"):
+            lines.append(f"태그라인: {detail['tagline']}")
+        if detail.get("revenue"):
+            lines.append(f"전세계 흥행 수익: ${detail['revenue']:,}")
+        if detail.get("budget"):
+            lines.append(f"제작비: ${detail['budget']:,}")
+        if detail.get("vote_count"):
+            lines.append(f"TMDB 평가 수: {detail['vote_count']:,}명")
+        if detail.get("popularity"):
+            lines.append(f"TMDB 인기도: {detail['popularity']:.1f}")
+        prod = [c["name"] for c in detail.get("production_countries", [])]
+        if prod:
+            lines.append(f"제작 국가: {', '.join(prod)}")
+        orig_lang = detail.get("original_language")
+        if orig_lang:
+            lines.append(f"원본 언어: {orig_lang}")
+
+        # 한국 OTT 서비스
+        providers = tmdb_get(f"movie/{tmdb_id}/watch/providers")
+        kr = providers.get("results", {}).get("KR", {})
+        if kr:
+            streaming = [p["provider_name"] for p in kr.get("flatrate", [])]
+            rental    = [p["provider_name"] for p in kr.get("rent", [])]
+            buy       = [p["provider_name"] for p in kr.get("buy", [])]
+            if streaming:
+                lines.append(f"한국 스트리밍 (구독): {', '.join(streaming)}")
+            if rental:
+                lines.append(f"한국 스트리밍 (대여): {', '.join(rental)}")
+            if buy:
+                lines.append(f"한국 스트리밍 (구매): {', '.join(buy)}")
+            if not streaming and not rental and not buy:
+                lines.append("한국 OTT: 현재 등록된 스트리밍 서비스 없음")
+        else:
+            lines.append("한국 OTT: 정보 없음")
+
+        # 키워드
+        kw_data = tmdb_get(f"movie/{tmdb_id}/keywords")
+        kw_list = [k["name"] for k in kw_data.get("keywords", [])[:15]]
+        if kw_list:
+            lines.append(f"관련 키워드: {', '.join(kw_list)}")
+
+        # 유사 영화 추천
+        similar = tmdb_get(f"movie/{tmdb_id}/similar")
+        sim_titles = [m["title"] for m in similar.get("results", [])[:5] if m.get("title")]
+        if sim_titles:
+            lines.append(f"비슷한 영화 (TMDB 추천): {', '.join(sim_titles)}")
+
+    except Exception:
+        pass  # TMDB 일부 실패해도 나머지 컨텍스트로 답변
+
+    return lines
+
+
 def build_metadata_context(cursor, movie_title: str) -> str:
-    """movies + movie_tmi 테이블에서 컨텍스트 문자열 생성"""
+    """movies + movie_tmi + TMDB 전체 컨텍스트 문자열 생성"""
     cursor.execute("""
         SELECT title, title_en, genre, director, release_date,
-               tmdb_rating, cast_members, overview, age_rating
+               tmdb_rating, cast_members, overview, age_rating, tmdb_id
         FROM movies WHERE title = %s
     """, (movie_title,))
     movie = cursor.fetchone()
@@ -232,24 +393,23 @@ def build_metadata_context(cursor, movie_title: str) -> str:
         return ""
 
     lines = [f"영화 제목: {movie['title']}"]
-    if movie["title_en"]:
-        lines.append(f"영문 제목: {movie['title_en']}")
-    if movie["genre"]:
-        lines.append(f"장르: {movie['genre']}")
-    if movie["director"]:
-        lines.append(f"감독: {movie['director']}")
-    if movie["release_date"]:
-        lines.append(f"개봉일: {str(movie['release_date'])[:10]}")
-    if movie["tmdb_rating"]:
-        lines.append(f"TMDB 평점: {movie['tmdb_rating']} / 10")
-    if movie["age_rating"]:
-        lines.append(f"관람등급: {movie['age_rating']}")
-    if movie["cast_members"]:
-        lines.append(f"출연진: {movie['cast_members']}")
-    if movie["overview"]:
-        lines.append(f"줄거리: {movie['overview']}")
+    if movie["title_en"]:     lines.append(f"영문 제목: {movie['title_en']}")
+    if movie["genre"]:        lines.append(f"장르: {movie['genre']}")
+    if movie["director"]:     lines.append(f"감독: {movie['director']}")
+    if movie["release_date"]: lines.append(f"개봉일: {str(movie['release_date'])[:10]}")
+    if movie["tmdb_rating"]:  lines.append(f"TMDB 평점: {movie['tmdb_rating']} / 10")
+    if movie["age_rating"]:   lines.append(f"관람등급: {movie['age_rating']}")
+    if movie["cast_members"]: lines.append(f"출연진: {movie['cast_members']}")
+    if movie["overview"]:     lines.append(f"줄거리: {movie['overview']}")
 
-    # TMI 추가
+    # TMDB 추가 정보 (OTT·흥행·키워드·유사영화)
+    if movie["tmdb_id"]:
+        extra = fetch_tmdb_extra(movie["tmdb_id"])
+        if extra:
+            lines.append("\n[TMDB 추가 정보]")
+            lines.extend(extra)
+
+    # TMI
     cursor.execute("""
         SELECT category, content FROM movie_tmi
         WHERE movie_id = (SELECT movie_id FROM movies WHERE title = %s)
@@ -264,6 +424,9 @@ def build_metadata_context(cursor, movie_title: str) -> str:
     return "\n".join(lines)
 
 
+# ============================================================
+#  7. 챗봇 Q&A
+# ============================================================
 @app.post("/chat", tags=["챗봇"])
 def chat(req: ChatRequest):
     conn = get_conn()
@@ -280,35 +443,69 @@ def chat(req: ChatRequest):
         """, (cache_key,))
         cached = cursor.fetchone()
         if cached:
-            return {
-                "question": req.question,
-                "answer": cached["answer"],
-                "sources": cached["sources"],
-                "cached": True
-            }
+            return {"question": req.question, "answer": cached["answer"],
+                    "sources": cached["sources"], "cached": True}
 
-        # 메타데이터 기반 답변 (movie_title 있을 때)
+        answer = ""
+        sources = ""
+
         if req.movie_title:
-            context = build_metadata_context(cursor, req.movie_title)
-            if context:
-                prompt = f"""당신은 영화 전문 도슨트입니다. 아래 영화 정보를 바탕으로 사용자 질문에 친절하고 자연스럽게 답변하세요.
-정보에 없는 내용은 지어내지 말고 "해당 정보가 없어요"라고 답하세요.
+            # TMDB 필모그래피 질문 감지
+            needs_tmdb = any(k in req.question for k in TMDB_TRIGGER)
 
-[영화 정보]
-{context}
+            if needs_tmdb:
+                cursor.execute("SELECT tmdb_id FROM movies WHERE title = %s", (req.movie_title,))
+                row = cursor.fetchone()
+                tmdb_id = row["tmdb_id"] if row else None
+
+                if tmdb_id:
+                    is_director_q = any(k in req.question for k in ["감독", "전작", "필모그래피"])
+                    if is_director_q:
+                        person_name, films = fetch_director_filmography(tmdb_id)
+                        role = "감독"
+                    else:
+                        person_name, films = fetch_actor_filmography(tmdb_id)
+                        role = "배우"
+
+                    if films:
+                        film_list = "\n".join(
+                            f"- {m['title']} ({m.get('release_date','')[:4]})"
+                            for m in films
+                        )
+                        prompt = f"""당신은 영화 전문 도슨트입니다. 아래 TMDB 데이터를 바탕으로 사용자 질문에 친절하게 한국어로 답변하세요.
+
+[{person_name} {role} 필모그래피 (TMDB 기준, 최신순)]
+{film_list}
 
 [사용자 질문]
 {req.question}"""
-                resp = gemini_model.generate_content(prompt)
-                answer = resp.text.strip()
-                sources = "DB (영화 메타데이터 + TMI)"
-            else:
-                answer = f"'{req.movie_title}' 영화를 DB에서 찾을 수 없어요."
-                sources = ""
+                        answer = ask_groq(prompt)
+                        sources = f"TMDB ({person_name} 필모그래피)"
+
+            # TMDB 조회 실패 또는 일반 메타데이터 질문
+            if not answer:
+                context = build_metadata_context(cursor, req.movie_title)
+                if context:
+                    # SerpAPI 실시간 검색 보조 컨텍스트
+                    web_context = fetch_serpapi_context(req.movie_title, req.question)
+                    web_section = f"\n[웹 검색 결과]\n{web_context}" if web_context else ""
+
+                    prompt = f"""당신은 영화 전문 도슨트입니다. 아래 영화 정보와 웹 검색 결과를 바탕으로 사용자 질문에 친절하고 자연스럽게 한국어로 답변하세요.
+확실하지 않은 내용은 지어내지 말고 "확인이 필요해요"라고 답하세요.
+
+[영화 정보]
+{context}
+{web_section}
+
+[사용자 질문]
+{req.question}"""
+                    answer = ask_groq(prompt)
+                    sources = "DB + TMDB + 웹 검색"
+                else:
+                    answer = f"'{req.movie_title}' 영화를 DB에서 찾을 수 없어요."
         else:
             # TODO: RAG팀 파이프라인 연동 예정
             answer = "RAG 파이프라인 연동 대기 중입니다."
-            sources = ""
 
         # QA 로그 저장
         cursor.execute("""
@@ -317,12 +514,8 @@ def chat(req: ChatRequest):
         """, (cache_key, answer, sources))
         conn.commit()
 
-        return {
-            "question": req.question,
-            "answer": answer,
-            "sources": sources,
-            "cached": False
-        }
+        return {"question": req.question, "answer": answer,
+                "sources": sources, "cached": False}
     finally:
         cursor.close()
         conn.close()
