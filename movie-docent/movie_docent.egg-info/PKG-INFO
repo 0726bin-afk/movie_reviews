@@ -11,6 +11,7 @@ Requires-Dist: python-dotenv>=1.0
 Requires-Dist: langchain>=0.3
 Requires-Dist: langchain-core>=0.3
 Requires-Dist: langchain-google-genai>=2.0
+Requires-Dist: google-generativeai>=0.8
 Requires-Dist: langgraph>=0.2
 Requires-Dist: langgraph-checkpoint-postgres>=2.0
 Requires-Dist: supabase>=2.8

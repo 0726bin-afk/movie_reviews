@@ -4,6 +4,7 @@ python-dotenv>=1.0
 langchain>=0.3
 langchain-core>=0.3
 langchain-google-genai>=2.0
+google-generativeai>=0.8
 langgraph>=0.2
 langgraph-checkpoint-postgres>=2.0
 supabase>=2.8

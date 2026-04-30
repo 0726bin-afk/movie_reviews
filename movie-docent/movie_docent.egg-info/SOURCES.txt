@@ -28,6 +28,7 @@ src/ingestion/__init__.py
 src/ingestion/crawlers/__init__.py
 src/ingestion/crawlers/duckduckgo_client.py
 src/ingestion/embedding/__init__.py
+src/ingestion/embedding/run.py
 src/ingestion/tagging/__init__.py
 src/providers/__init__.py
 src/providers/base.py
@@ -62,3 +63,4 @@ src/rag/prompts/review_summary.py
 src/rag/prompts/router.py
 src/rag/prompts/tmi.py
 src/rag/retrievers/__init__.py
+src/rag/retrievers/self_query.py

@@ -53,6 +53,16 @@ TMDB_BASE = "https://api.themoviedb.org/3"
 # 이 키워드가 포함되면 TMDB 필모그래피 조회
 TMDB_TRIGGER = ["다른 영화", "다른 작품", "전작", "필모그래피", "출연작", "감독 작품", "감독 영화"]
 
+# 이 키워드가 포함되면 리뷰 기반 질문 (RAG 대상)
+REVIEW_TRIGGER = [
+    "볼만해", "재밌어", "재미있어", "추천", "호불호", "무서워", "지루해", "감동", "웃겨",
+    "어때", "평가", "반응", "관객", "리뷰", "후기", "별로", "최고", "진짜", "실망",
+    "어떤 영화", "어떤가", "어떤지", "좋아", "싫어", "괜찮아",
+    "단점", "장점", "아쉬운", "아쉬워", "문제", "약점", "나쁜", "좋은 점", "별점",
+    "worth", "재미", "몰입", "스토리", "연기", "결말", "반전", "ost", "음악",
+    "강점", "취약", "부족", "완성도", "퀄리티", "수작", "졸작", "명작"
+]
+
 
 # ============================================================
 #  요청/응답 모델
@@ -264,7 +274,13 @@ def ask_groq(prompt: str) -> str:
         messages=[
             {
                 "role": "system",
-                "content": "당신은 한국어 영화 전문 도슨트입니다. 반드시 순수한 한국어로만 답변하세요. 한자, 중국어, 일본어 문자를 절대 사용하지 마세요."
+                "content": (
+                    "당신은 한국어 영화 전문 도슨트입니다. "
+                    "반드시 순수한 한국어로만 답변하세요. "
+                    "한자(漢字), 중국어 간체/번체, 일본어 히라가나/가타카나를 절대 사용하지 마세요. "
+                    "컨텍스트에 한자가 포함되어 있어도 반드시 한글로 바꿔서 답변하세요. "
+                    "예: '欠' → '부족', '缺' → '결함', '点' → '점' 으로 변환."
+                )
             },
             {"role": "user", "content": prompt}
         ],
@@ -381,6 +397,23 @@ def fetch_tmdb_extra(tmdb_id: int) -> list:
     return lines
 
 
+def fetch_reviews_context(cursor, movie_title: str, limit: int = 20) -> str:
+    """DB 리뷰를 직접 가져와 컨텍스트 생성 (RAG 대체 임시 처리)"""
+    cursor.execute("""
+        SELECT r.rating, r.content, r.likes_count
+        FROM reviews r
+        JOIN movies m ON r.movie_id = m.movie_id
+        WHERE m.title = %s AND r.content IS NOT NULL AND LENGTH(r.content) > 10
+        ORDER BY r.likes_count DESC
+        LIMIT %s
+    """, (movie_title, limit))
+    rows = cursor.fetchall()
+    if not rows:
+        return ""
+    lines = [f"[리뷰 {i+1}] 평점 {r['rating']} — {r['content']}" for i, r in enumerate(rows)]
+    return "\n".join(lines)
+
+
 def build_metadata_context(cursor, movie_title: str) -> str:
     """movies + movie_tmi + TMDB 전체 컨텍스트 문자열 생성"""
     cursor.execute("""
@@ -450,9 +483,35 @@ def chat(req: ChatRequest):
         sources = ""
 
         if req.movie_title:
-            # TMDB 필모그래피 질문 감지
-            needs_tmdb = any(k in req.question for k in TMDB_TRIGGER)
+            # 질문 유형 분류
+            needs_tmdb   = any(k in req.question for k in TMDB_TRIGGER)
+            needs_review = any(k in req.question for k in REVIEW_TRIGGER)
 
+            # ── 리뷰 기반 질문 (RAG 대상) ──────────────────────────
+            # TODO: RAG팀 파이프라인 완성 후 아래 블록을 RAG 호출로 교체
+            if needs_review and not needs_tmdb:
+                review_context = fetch_reviews_context(cursor, req.movie_title)
+                if review_context:
+                    prompt = f"""당신은 영화 전문 도슨트입니다. 아래 실제 관객 리뷰를 분석해서 사용자 질문에 친절하게 한국어로 답변하세요.
+리뷰에 없는 내용은 지어내지 말고 리뷰 데이터 기반으로만 답변하세요.
+
+[영화: {req.movie_title} 관객 리뷰 (좋아요 순 상위 20개)]
+{review_context}
+
+[사용자 질문]
+{req.question}"""
+                    answer = ask_groq(prompt)
+                    sources = "DB 리뷰 (RAG 예정)"
+
+                    cursor.execute("""
+                        INSERT INTO qa_log (question, answer, sources)
+                        VALUES (%s, %s, %s)
+                    """, (cache_key, answer, sources))
+                    conn.commit()
+                    return {"question": req.question, "answer": answer,
+                            "sources": sources, "cached": False}
+
+            # ── TMDB 필모그래피 질문 ──────────────────────────────
             if needs_tmdb:
                 cursor.execute("SELECT tmdb_id FROM movies WHERE title = %s", (req.movie_title,))
                 row = cursor.fetchone()

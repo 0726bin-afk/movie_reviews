@@ -41,7 +41,6 @@ def _extract_target_movie(question: str) -> str | None:
             return m.group(1).strip()
     return None
 
-
 def _parse_query_type(raw: str) -> str:
     """LLM 출력에서 카테고리명 substring matching."""
     text = raw.strip().lower()
@@ -50,21 +49,47 @@ def _parse_query_type(raw: str) -> str:
             return cat
     return "basic_info"
 
+def _parse_llm_response(raw: str):
+    """LLM의 출력에서 유형과 제목을 동시에 추출"""
+    text = raw.strip().lower()
+    
+    # 1. query_type 찾기
+    selected_type = "basic_info" # 기본값
+    for cat in VALID_QUERY_TYPES:
+        if cat in text:
+            selected_type = cat
+            break
+            
+    # 2. target_movie 찾기 (정규표현식으로 target_movie: 뒷부분 추출)
+    target_movie = None
+    match = re.search(r"target_movie:\s*(.+)", raw, re.IGNORECASE)
+    if match:
+        val = match.group(1).strip()
+        if val.lower() != "none":
+            target_movie = val
+            
+    return selected_type, target_movie
+
 
 async def route_query(state: "QueryState") -> "QueryState":
-    """질문 → query_type. async — llm.ainvoke."""
     t0 = time.perf_counter()
+    print("\n▶ [route_query] 시작")
 
     question = state.get("question", "")
     llm = get_llm()
 
     prompt_value = router_prompt.format_prompt(question=question)
     raw = await llm.ainvoke(prompt_value.to_string())
-    query_type = _parse_query_type(raw)
 
-    target_movie = state.get("target_movie") or _extract_target_movie(question)
+    # 수정된 파싱 함수 사용
+    query_type, target_movie = _parse_llm_response(raw)
+
+   # LLM이 제목을 못 찾았을 때만 기존의 따옴표 로직으로 보완
+    if not target_movie:
+        target_movie = _extract_target_movie(question)
 
     latency = (time.perf_counter() - t0) * 1000
+    print(f"✓ [route_query] 완료 — {latency:.0f}ms  (유형: {query_type}, 영화: {target_movie})")
     return {
         **state,
         "query_type": query_type,

@@ -37,6 +37,7 @@ def _format_docs(docs: "list[RetrievedDoc]") -> str:
 async def generate(state: "QueryState") -> "QueryState":
     """LLM 호출해서 답변 생성. async — llm.ainvoke."""
     t0 = time.perf_counter()
+    print("\n▶ [generate] 시작  (LLM 호출 중...)")
 
     question = state.get("question", "")
     docs = (state.get("retrieved_docs") or []) + (state.get("grounding_docs") or [])
@@ -54,6 +55,7 @@ async def generate(state: "QueryState") -> "QueryState":
     body, sources = split_answer_and_sources(raw_answer, docs=docs)
 
     latency = (time.perf_counter() - t0) * 1000
+    print(f"✓ [generate] 완료 — {latency:.0f}ms  (출처 {len(sources)}건 포함)")
     return {
         **state,
         "answer": body,

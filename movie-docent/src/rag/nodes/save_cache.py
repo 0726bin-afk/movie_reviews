@@ -21,9 +21,11 @@ if TYPE_CHECKING:
 async def save_cache(state: "QueryState") -> "QueryState":
     """답변을 캐시에 저장. 답변이 비어 있으면 스킵."""
     t0 = time.perf_counter()
+    print("\n▶ [save_cache] 시작")
 
     answer = (state.get("answer") or "").strip()
     if not answer:
+        print("✓ [save_cache] 완료 — 0ms  (답변 없음, 저장 스킵)")
         return state
 
     question = state.get("question", "")
@@ -48,6 +50,7 @@ async def save_cache(state: "QueryState") -> "QueryState":
         pass
 
     latency = (time.perf_counter() - t0) * 1000
+    print(f"✓ [save_cache] 완료 — {latency:.0f}ms")
     return {
         **state,
         "latency_ms": {**(state.get("latency_ms") or {}), "save_cache": latency},
