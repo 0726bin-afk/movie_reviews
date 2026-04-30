@@ -230,12 +230,20 @@ def page_detail():
         if reviews:
             for r in reviews:
                 rating_str = f"⭐ {r['rating']} / 5" if r.get("rating") else "별점 없음"
-                st.markdown(f"""
-                <div class="review-card">
-                    <b>{r.get('reviewer_nickname', '익명')}</b> &nbsp; {rating_str} &nbsp; 👍 {r.get('likes_count', 0)}<br>
-                    <span style="font-size:0.95em">{r.get('content', '')}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                content_html = (r.get('content', '') or '').replace('\n', '<br>')
+                header = f"<b>{r.get('reviewer_nickname', '익명')}</b> &nbsp; {rating_str} &nbsp; 👍 {r.get('likes_count', 0)}"
+
+                if r.get("is_spoiler"):
+                    st.markdown(f'<div class="review-card">{header}</div>', unsafe_allow_html=True)
+                    with st.expander("⚠️ 스포일러 포함 — 클릭하여 보기"):
+                        st.markdown(f'<span style="font-size:0.95em">{content_html}</span>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="review-card">
+                        {header}<br><br>
+                        <span style="font-size:0.95em">{content_html}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
         else:
             st.write("리뷰가 없어요.")
 
@@ -249,8 +257,6 @@ def page_detail():
                 with st.expander(f"📌 {cat} ({len(items)}건)"):
                     for item in items:
                         st.write(item.get("content", ""))
-                        if item.get("source_url"):
-                            st.markdown(f"[출처]({item['source_url']})")
                         st.markdown("---")
         else:
             st.write("TMI 정보가 없어요. 위 '실시간 검색'을 눌러보세요!")
