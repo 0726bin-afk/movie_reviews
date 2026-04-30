@@ -38,7 +38,14 @@ class Settings(BaseSettings):
     # provider별 세밀 튜닝은 `config/model_registry.py`에서 override.
     LLM_TEMPERATURE: float = 0.3
     LLM_MAX_TOKENS: int = 2048
-    EMBEDDING_DIMENSION: int = 768  # Gemini text-embedding-004 기준
+
+    # 임베딩 모델 — 차원이 schema의 vector(N)과 정확히 일치해야 함.
+    # 사용 가능 모델 (2026 기준):
+    #   "models/gemini-embedding-001"  : 권장. 기본 3072 / output_dimensionality로 768·1536·3072 선택
+    #   "models/text-embedding-004"    : 768 dim 고정. 일부 v1beta에서 404 발생
+    #   "models/embedding-001"         : 레거시 768. 키에 따라 불가
+    EMBEDDING_MODEL_NAME: str = "models/gemini-embedding-001"
+    EMBEDDING_DIMENSION: int = 768
 
     # ========== API 키 ==========
     # 발급 후 .env에 기입. settings.py 직접 수정 금지.
