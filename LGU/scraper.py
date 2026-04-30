@@ -186,7 +186,7 @@ def find_movie_on_watcha(page, search_title, list_year, tmdb_year):
     return True
 
 def scrape_reviews(page, movie_name):
-    print(f"📊 '{movie_name}' 리뷰 수집 시작 (목표: 필터당 신규 100개씩)...")
+    print(f"📊 '{movie_name}' 리뷰 수집 시작 (목표: 필터당 신규 20개씩)...")
     
     try:
         page.wait_for_url("**/contents/*", timeout=5000)
@@ -214,7 +214,7 @@ def scrape_reviews(page, movie_name):
     
     all_combined_reviews = []
     seen_content = set()
-    target_per_filter = 100
+    target_per_filter = 20
 
     for sort_name, order_param in sort_options:
         print(f"  ➡️ [{sort_name}] 필터 적용 중...")
