@@ -187,6 +187,16 @@ def main():
         print("해당 텍스트 파일을 열고 ____ 부분을 직접 채운 후 저장해주세요.")
         print("="*60 + "\n")
         
+        # 윈도우 환경에서 텍스트 파일 자동 실행
+        try:
+            os.startfile(MANUAL_FORM_PATH)
+        except AttributeError:
+            import subprocess, sys
+            if sys.platform.startswith('darwin'):
+                subprocess.call(('open', MANUAL_FORM_PATH))
+            elif os.name == 'posix':
+                subprocess.call(('xdg-open', MANUAL_FORM_PATH))
+        
         input("입력과 저장을 마치셨다면 [Enter] 키를 누르세요...")
         
         manual_updates = read_manual_form()
