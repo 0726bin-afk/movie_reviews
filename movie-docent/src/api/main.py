@@ -18,13 +18,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import chat, health, movies, tmi
+from core.observability import configure_langsmith
 from db.client import close_pool, get_pool
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """앱 시작 시 DB 풀 워밍업, 종료 시 close."""
-    # 시작
+    # LangSmith 트레이싱 — .env LANGSMITH_TRACING=true 일 때만 켜짐
+    configure_langsmith()
+
+    # DB 풀 워밍업
     try:
         await get_pool()  # 연결 실패는 첫 실제 쿼리에서 잡히게 — DB 없이도 부팅 가능
     except Exception:

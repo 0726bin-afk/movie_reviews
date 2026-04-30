@@ -24,6 +24,49 @@ if TYPE_CHECKING:
     from rag.state import QueryState
 
 
+# ── CLI 출력 헬퍼 ─────────────────────────────────────────────
+
+def _print_docs(docs: list) -> None:
+    """retrieved_docs 내용을 CLI에 보기 좋게 출력."""
+    if not docs:
+        print("  (검색된 참고 자료 없음)")
+        return
+
+    SOURCE_LABEL = {
+        "movie":   "🎬 영화정보",
+        "review":  "💬 리뷰    ",
+        "tmi":     "🔍 TMI    ",
+        "grounded":"🌐 그라운딩",
+    }
+
+    for i, doc in enumerate(docs, 1):
+        label = SOURCE_LABEL.get(doc.source, f"📄 {doc.source:<8}")
+        title = (doc.metadata or {}).get("title", "")
+        title_str = f"[{title}] " if title else ""
+        score_str = f"score={doc.score:.2f}"
+
+        # 리뷰인 경우 닉네임·별점 추가
+        extra = ""
+        if doc.source == "review":
+            nick = (doc.metadata or {}).get("reviewer_nickname", "")
+            rating = (doc.metadata or {}).get("rating")
+            if nick:
+                extra = f"  by {nick}"
+            if rating is not None:
+                extra += f"  ★{rating}"
+
+        # 본문 미리보기 (최대 120자)
+        preview = doc.text.replace("\n", " ").strip()
+        if len(preview) > 120:
+            preview = preview[:120] + "…"
+
+        connector = "├" if i < len(docs) else "└"
+        print(f"  {connector}─ [{i}] {label}  {title_str}{score_str}{extra}")
+        print(f"  │     {preview}")
+
+    print("  └─────────────────────────────")
+
+
 async def _retrieve_basic_info(target_movie):
     """basic_info: 영화 메타 1건 + 인기 리뷰 3건."""
     if not target_movie:
@@ -145,6 +188,8 @@ async def retrieve(state):
 
     latency = (time.perf_counter() - t0) * 1000
     print(f"✓ [retrieve] 완료 — {latency:.0f}ms  (문서 {len(docs)}건 검색됨)")
+    print(f"  ┌─ 📚 [참고 자료 {len(docs)}건]")
+    _print_docs(docs)
     return {
         **state,
         "retrieved_docs": docs,

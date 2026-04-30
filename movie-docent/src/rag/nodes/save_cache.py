@@ -46,8 +46,9 @@ async def save_cache(state: "QueryState") -> "QueryState":
     )
     try:
         await get_cache_repo().save(entry)
-    except Exception:
-        pass
+        print("✓ [save_cache] DB 저장 성공!")
+    except Exception as e:
+        print(f"✗ [save_cache] 저장 실패: {e}")  # pass → 에러 출력으로 변경
 
     latency = (time.perf_counter() - t0) * 1000
     print(f"✓ [save_cache] 완료 — {latency:.0f}ms")

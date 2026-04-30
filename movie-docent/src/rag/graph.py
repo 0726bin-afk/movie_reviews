@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from langgraph.graph import END, START, StateGraph
 
+from core.observability import configure_langsmith
 from rag.nodes.cache_check import cache_check
 from rag.nodes.generate import generate
 from rag.nodes.ground import ground
@@ -42,6 +43,8 @@ def _post_retrieve_route(state: QueryState) -> str:
 
 def build_graph(checkpointer=None, with_cache: bool = True):
     """LangGraph StateGraph 빌드 후 컴파일."""
+    configure_langsmith()   # .env LANGSMITH_TRACING=true 일 때만 실제로 켜짐
+
     g = StateGraph(QueryState)
 
     if with_cache:

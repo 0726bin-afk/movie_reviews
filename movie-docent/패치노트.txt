@@ -1,0 +1,15 @@
+router.py
+router_query.py
+기존 코드가 질문에서 <기생충>, "기생충" 이렇게 써져 있어야만 영화 제목을 인식하는 문제를 해결
+llm에게 질문 내용 분류 뿐만 아니라 영화 제목도 수집해달라고 요청을 바꿨음
+
+movies_repo.py
+데이터베이스에서 frontend에서 필요한 영화 포스터 url 및 기타 정보를 빠트려서 가져옴
+
+pyproject.toml
+gemini-embedding-001 모델을 인식하지 못해서 "google-generativeai>=0.8",추가
+
+----------------------
+
+cli환경에서 RAG 출력 강화, langsmith 연결
+save_cache, cache_repository 수정. 이제 제대로 supabase에 이전 답변이 올라감

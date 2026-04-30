@@ -23,6 +23,32 @@ if TYPE_CHECKING:
     from rag.state import QueryState
 
 
+# ── CLI 출력 헬퍼 ─────────────────────────────────────────────
+
+def _print_grounding_docs(docs: list) -> None:
+    """grounding_docs 내용을 CLI에 보기 좋게 출력."""
+    if not docs:
+        print("  (그라운딩 결과 없음)")
+        return
+
+    for i, doc in enumerate(docs, 1):
+        category = (doc.metadata or {}).get("category", "")
+        url = (doc.metadata or {}).get("url", "")
+
+        # 본문 미리보기 (최대 150자)
+        preview = doc.text.replace("\n", " ").strip()
+        if len(preview) > 150:
+            preview = preview[:150] + "…"
+
+        connector = "├" if i < len(docs) else "└"
+        print(f"  {connector}─ [{i}] 🌐 {category}  score={doc.score:.2f}")
+        if url:
+            print(f"  │     출처: {url}")
+        print(f"  │     {preview}")
+
+    print("  └─────────────────────────────")
+
+
 TMI_CATEGORIES = ["촬영지", "OST", "비하인드", "옥에티", "캐스팅비화"]
 
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
@@ -128,6 +154,8 @@ def _result(state, t0, grounding_docs):
     """공통 반환 셰이프."""
     latency = (time.perf_counter() - t0) * 1000
     print(f"✓ [ground] 완료 — {latency:.0f}ms  (그라운딩 문서 {len(grounding_docs)}건)")
+    print(f"  ┌─ 🌐 [DuckDuckGo 그라운딩 자료 {len(grounding_docs)}건]")
+    _print_grounding_docs(grounding_docs)
     return {
         **state,
         "grounding_docs": grounding_docs,

@@ -14,6 +14,7 @@
   python -m ingestion.embedding.run --limit 100        # 100건만
   python -m ingestion.embedding.run --force            # 이미 있어도 재임베딩
   python -m ingestion.embedding.run --batch 50         # 배치 크기 변경
+  python -m ingestion.embedding.run --sleep 15         # 배치 간 대기 시간(초) 변경
 
 선행 조건:
   - schema.sql 적용 완료 (review_embeddings 테이블 + pgvector 확장)
@@ -80,8 +81,10 @@ async def fetch_pending_reviews(
         {limit_sql}
     """
 
+    # 수정된 코드
     async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, *params)
+        # timeout을 300초(5분) 정도로 넉넉하게 주거나, None(무제한)으로 설정해!
+        rows = await conn.fetch(sql, *params, timeout=300.0)
         return [dict(r) for r in rows]
 
 
@@ -150,10 +153,11 @@ async def run(
     limit: int | None,
     force: bool,
     batch_size: int,
+    sleep_time: int,
 ) -> None:
     embedder = get_embedding()
     print(f"임베딩 모델: {embedder.model_name} ({embedder.dimension}차원)")
-    print(f"옵션: movie_id={movie_id}, limit={limit}, force={force}, batch={batch_size}\n")
+    print(f"옵션: movie_id={movie_id}, limit={limit}, force={force}, batch={batch_size}, sleep={sleep_time}\n")
 
     items = await fetch_pending_reviews(movie_id=movie_id, limit=limit, force=force)
     total = len(items)
@@ -176,7 +180,10 @@ async def run(
             texts = [it["content"] for it in batch]
             vecs = await embedder.aembed_documents(texts)
         except Exception as e:
-            print(f"❌ 임베딩 실패: {e}")
+            print(f"\n❌ 임베딩 실패: {e}")
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                print("⏳ 429 할당량 초과 에러 감지! 30초 대기 후 다음 배치로 넘어갈게...")
+                await asyncio.sleep(30)
             failed += len(batch)
             continue
 
@@ -187,8 +194,13 @@ async def run(
             rate = success / elapsed if elapsed > 0 else 0
             print(f"✅ {n}건 INSERT (누적 {success}/{total}, {rate:.1f}건/s)")
         except Exception as e:
-            print(f"❌ INSERT 실패: {e}")
+            print(f"\n❌ INSERT 실패: {e}")
             failed += len(batch)
+
+        # 마지막 배치가 아니면 지정된 시간만큼 대기 (무료 티어 제한 방지)
+        if i + batch_size < total:
+            print(f"⏳ 무료 할당량(RPM) 보호를 위해 {sleep_time}초 대기 중...")
+            await asyncio.sleep(sleep_time)
 
     elapsed = time.perf_counter() - t_start
     print(
@@ -207,6 +219,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--limit", type=int, default=None, help="최대 처리 건수")
     p.add_argument("--force", action="store_true", help="이미 있어도 재임베딩")
     p.add_argument("--batch", type=int, default=32, help="배치 크기 (기본 32)")
+    p.add_argument("--sleep", type=int, default=15, help="배치 간 대기 시간(초) (기본 15)")
     return p.parse_args(argv)
 
 
@@ -220,6 +233,7 @@ def main() -> None:
                 limit=args.limit,
                 force=args.force,
                 batch_size=args.batch,
+                sleep_time=args.sleep,
             )
         finally:
             await close_pool()

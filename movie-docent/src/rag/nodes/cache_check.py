@@ -21,6 +21,19 @@ if TYPE_CHECKING:
     from rag.state import QueryState
 
 
+# ── CLI 출력 헬퍼 ─────────────────────────────────────────────
+
+def _print_cached_answer(answer: str) -> None:
+    """캐시 히트 시 저장된 이전 답변을 CLI에 출력."""
+    preview = answer.strip()
+    if len(preview) > 200:
+        preview = preview[:200] + "…"
+    print("  ┌─ 📋 [캐시된 이전 답변]")
+    for line in preview.splitlines():
+        print(f"  │  {line}")
+    print("  └─────────────────────────────")
+
+
 async def cache_check(state: "QueryState") -> "QueryState":
     """캐시 조회. 히트하면 answer/sources 채우고 cache_hit=True."""
     t0 = time.perf_counter()
@@ -34,6 +47,7 @@ async def cache_check(state: "QueryState") -> "QueryState":
     if hit is not None:
         latency = (time.perf_counter() - t0) * 1000
         print(f"✓ [cache_check] 완료 — {latency:.0f}ms  (캐시 히트: exact → END)")
+        _print_cached_answer(hit.answer)
         return {
             **state,
             "cache_hit": True,
@@ -59,6 +73,7 @@ async def cache_check(state: "QueryState") -> "QueryState":
         entry, score = result
         latency = (time.perf_counter() - t0) * 1000
         print(f"✓ [cache_check] 완료 — {latency:.0f}ms  (캐시 히트: similar, score={score:.3f} → END)")
+        _print_cached_answer(entry.answer)
         return {
             **state,
             "cache_hit": True,
