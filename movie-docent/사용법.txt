@@ -1,0 +1,5 @@
+사용법
+1. 깃헙에서 폴더 통째로 받기
+2. 가상환경에서 / pip install -e ".[dev]"
+3. 가상환경 1에서 / uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+4. 가상환경 2에서 / python -m rag.graph "기생충 감독이 누구야?"

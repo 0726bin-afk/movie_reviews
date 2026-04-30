@@ -120,14 +120,12 @@ async def _retrieve_tmi(target_movie):
 async def retrieve(state):
     """query_type 분기 → 적합한 소스 검색."""
     t0 = time.perf_counter()
+    print("\n▶ [retrieve] 시작")
 
     question = state.get("question", "")
     target = state.get("target_movie")
     query_type = state.get("query_type") or "basic_info"
     top_k = settings.RETRIEVER_TOP_K
-
-    print(f"\n[DEBUG] 현재 추출된 영화 제목: '{target}'")
-    print(f"[DEBUG] 현재 판별된 쿼리 타입: {query_type}")
 
     try:
         if query_type == "basic_info":
@@ -146,6 +144,7 @@ async def retrieve(state):
         docs = []
 
     latency = (time.perf_counter() - t0) * 1000
+    print(f"✓ [retrieve] 완료 — {latency:.0f}ms  (문서 {len(docs)}건 검색됨)")
     return {
         **state,
         "retrieved_docs": docs,

@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 async def cache_check(state: "QueryState") -> "QueryState":
     """캐시 조회. 히트하면 answer/sources 채우고 cache_hit=True."""
     t0 = time.perf_counter()
+    print("\n▶ [cache_check] 시작")
 
     question = state.get("question", "")
     repo = get_cache_repo()
@@ -32,6 +33,7 @@ async def cache_check(state: "QueryState") -> "QueryState":
     hit = await repo.lookup_exact(question)
     if hit is not None:
         latency = (time.perf_counter() - t0) * 1000
+        print(f"✓ [cache_check] 완료 — {latency:.0f}ms  (캐시 히트: exact → END)")
         return {
             **state,
             "cache_hit": True,
@@ -56,6 +58,7 @@ async def cache_check(state: "QueryState") -> "QueryState":
     if result is not None:
         entry, score = result
         latency = (time.perf_counter() - t0) * 1000
+        print(f"✓ [cache_check] 완료 — {latency:.0f}ms  (캐시 히트: similar, score={score:.3f} → END)")
         return {
             **state,
             "cache_hit": True,
@@ -69,6 +72,7 @@ async def cache_check(state: "QueryState") -> "QueryState":
 
     # ---- 미스 ----
     latency = (time.perf_counter() - t0) * 1000
+    print(f"✓ [cache_check] 완료 — {latency:.0f}ms  (캐시 미스 → route_query로)")
     out: dict = {
         **state,
         "cache_hit": False,

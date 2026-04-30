@@ -73,12 +73,14 @@ def _parse_llm_response(raw: str):
 
 async def route_query(state: "QueryState") -> "QueryState":
     t0 = time.perf_counter()
+    print("\n▶ [route_query] 시작")
+
     question = state.get("question", "")
     llm = get_llm()
 
     prompt_value = router_prompt.format_prompt(question=question)
     raw = await llm.ainvoke(prompt_value.to_string())
-    
+
     # 수정된 파싱 함수 사용
     query_type, target_movie = _parse_llm_response(raw)
 
@@ -86,9 +88,11 @@ async def route_query(state: "QueryState") -> "QueryState":
     if not target_movie:
         target_movie = _extract_target_movie(question)
 
+    latency = (time.perf_counter() - t0) * 1000
+    print(f"✓ [route_query] 완료 — {latency:.0f}ms  (유형: {query_type}, 영화: {target_movie})")
     return {
         **state,
         "query_type": query_type,
-        "target_movie": target_movie, # 이제 드디어 '기생충'이 담깁니다!
-        # ... 
+        "target_movie": target_movie,
+        "latency_ms": {**(state.get("latency_ms") or {}), "route_query": latency},
     }

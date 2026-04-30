@@ -59,6 +59,7 @@ async def _resolve_movie_id(target):
 async def ground(state):
     """그라운딩 노드 — DDG 검색 + grounding_docs 채움 + DB 적재."""
     t0 = time.perf_counter()
+    print("\n▶ [ground] 시작  (DuckDuckGo 실시간 검색)")
 
     question = state.get("question", "")
     target = state.get("target_movie")
@@ -126,6 +127,7 @@ async def ground(state):
 def _result(state, t0, grounding_docs):
     """공통 반환 셰이프."""
     latency = (time.perf_counter() - t0) * 1000
+    print(f"✓ [ground] 완료 — {latency:.0f}ms  (그라운딩 문서 {len(grounding_docs)}건)")
     return {
         **state,
         "grounding_docs": grounding_docs,

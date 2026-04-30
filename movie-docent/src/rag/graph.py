@@ -105,7 +105,9 @@ async def _amain(question: str, session_id: str = "default") -> None:
     """async 진입 — 모든 노드가 async라 ainvoke로 호출."""
     from rag.state import empty_state
 
-    print(f"\n[질문] {question}\n")
+    print("=" * 55)
+    print(f"  질문: {question}")
+    print("=" * 55)
 
     graph = get_graph()
     config = {"configurable": {"thread_id": session_id}}
@@ -114,20 +116,40 @@ async def _amain(question: str, session_id: str = "default") -> None:
         config=config,
     )
 
-    print(f"[query_type]     {result.get('query_type')}")
-    print(f"[target_movie]   {result.get('target_movie')}")
-    print(
-        f"[cache_hit]      {result.get('cache_hit')} "
-        f"({result.get('cache_source')}, score={result.get('cache_score')})"
-    )
-    print(f"[retrieved_docs] {len(result.get('retrieved_docs') or [])}건")
-    print(f"[grounding_docs] {len(result.get('grounding_docs') or [])}건")
-    print(f"[sources]        {len(result.get('sources') or [])}건")
-    print(f"[latency_ms]     {result.get('latency_ms')}")
-    print()
-    print("[답변]")
+    # ── 노드별 소요시간 요약 ──────────────────────────────
+    latency: dict = result.get("latency_ms") or {}
+    NODE_ORDER = ["cache_check", "route_query", "retrieve", "ground", "generate", "save_cache"]
+    total_ms = sum(latency.values())
+
+    print("\n" + "─" * 55)
+    print("  ⏱  노드별 소요시간")
+    print("─" * 55)
+    for node in NODE_ORDER:
+        if node in latency:
+            ms = latency[node]
+            bar = "█" * max(1, int(ms / 100))   # 100ms = ▊ 1칸
+            print(f"  {node:<14} {ms:>7.0f} ms  {bar}")
+    print("─" * 55)
+    print(f"  {'합계':<14} {total_ms:>7.0f} ms")
+    print("─" * 55)
+
+    # ── 결과 요약 ─────────────────────────────────────────
+    cache_hit = result.get("cache_hit")
+    cache_src = result.get("cache_source")
+    print(f"\n  유형:   {result.get('query_type')}  |  영화: {result.get('target_movie')}")
+    if cache_hit:
+        print(f"  캐시:   히트 ({cache_src})  → 노드 건너뜀")
+    else:
+        print(f"  캐시:   미스")
+    print(f"  문서:   retrieved {len(result.get('retrieved_docs') or [])}건  "
+          f"/ grounding {len(result.get('grounding_docs') or [])}건  "
+          f"/ 출처 {len(result.get('sources') or [])}건")
+
+    print("\n" + "─" * 55)
+    print("  답변")
+    print("─" * 55)
     print(result.get("answer", "(no answer)"))
-    print()
+    print("=" * 55 + "\n")
 
 
 def main() -> None:
