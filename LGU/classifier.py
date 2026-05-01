@@ -73,16 +73,17 @@ def classify_batch_with_local_llm(review_batch, max_retries=5):
     - ⚠️ 절대 비워두지 마세요: 'search_keywords'는 본문 내용에서 유추할 수 있는 대표 핵심 단어를 개수 제한 없이 최대한 다양하고 풍부하게 추출하세요 (최소 1개 이상).
 
     [응답 지시 (매우 중요)]:
-    1. 반드시 아래 제시된 JSON 리스트 형식으로만 응답해야 합니다. 다른 부가적인 텍스트나 마크다운 코드 블록(```json 등)은 절대 포함하지 마세요.
+    1. 반드시 아래 제시된 단일 JSON 객체 형식으로만 응답해야 합니다. 리스트나 다른 부가적인 텍스트는 절대 포함하지 마세요.
     2. JSON 문법을 완벽하게 지켜야 합니다. 키와 값은 반드시 큰따옴표(")로 감싸야 하며, 문자열 내부에 큰따옴표가 들어갈 경우 작은따옴표(')로 대체하세요.
     3. 항목 사이의 쉼표(,)를 절대 누락하지 마세요.
-    4. 요청받은 {len(review_batch)}개의 리뷰에 대한 분석 결과가 모두 리스트 안에 포함되어야 합니다. 중간에 생략하지 마세요.
+    4. 제공된 리뷰에 대한 분석 결과를 단일 JSON 객체로 응답하세요.
 
     형식 예시 (실제 값으로 대체할 것):
-    [
-        {{"id": 0, "content_character": ["추출한태그1", "추출한태그2"], "search_keywords": ["핵심단어1", "핵심단어2", "핵심단어3"]}},
-        {{"id": 1, "content_character": ["추출한태그3"], "search_keywords": ["핵심단어4"]}}
-    ]
+    {{
+        "id": 0,
+        "content_character": ["추출한태그1", "추출한태그2"],
+        "search_keywords": ["핵심단어1", "핵심단어2", "핵심단어3"]
+    }}
 
     [리뷰 리스트]:
     {batch_text}
@@ -93,13 +94,19 @@ def classify_batch_with_local_llm(review_batch, max_retries=5):
         try:
             response = ollama.chat(model=LOCAL_MODEL, messages=[
                 {'role': 'user', 'content': prompt},
-            ])
+            ], format='json')
 
             response_text = response['message']['content']
             # 마크다운 블록 제거 및 텍스트 정리
             json_text = re.sub(r'```json|```', '', response_text).strip()
 
-            results = json.loads(json_text)
+            result_obj = json.loads(json_text)
+            
+            # 단일 딕셔너리 응답일 경우 리스트로 감싸줌
+            if isinstance(result_obj, dict):
+                results = [result_obj]
+            else:
+                results = result_obj
 
             # 검증 1: 결과 개수가 맞는지 확인
             if len(results) != len(review_batch):
@@ -112,6 +119,14 @@ def classify_batch_with_local_llm(review_batch, max_retries=5):
 
                 if not content_chars or not keywords:
                     raise ValueError(f"ID {res.get('id')}의 태그나 키워드가 비어있습니다. 재생성을 요구합니다.")
+
+                # 허용되지 않은 태그 필터링 (품질 보장)
+                allowed_tags = {"전체긍정", "전체부정", "전체복합", "연기좋음", "연기나쁨", "연출좋음", "연출나쁨", "서사좋음", "서사나쁨", "비주얼좋음", "비주얼나쁨", "음악좋음", "분위기가벼움", "분위기무거움", "고증좋음", "고증나쁨", "주의사항", "TMI", "장르특성"}
+                res["content_character"] = [t for t in content_chars if t in allowed_tags]
+                
+                # 만약 필터링 후 태그가 다 날아갔다면 기본값
+                if not res["content_character"]:
+                    res["content_character"] = ["일반감상"]
 
                 # 프롬프트 예시를 그대로 복사했는지 검증
                 if "추출한태그1" in content_chars or "핵심단어1" in keywords:
@@ -177,11 +192,23 @@ def run_classification():
 
         print(f"🚀 총 {len(pending_reviews)}개의 리뷰를 로컬 LLM({LOCAL_MODEL})으로 분석합니다.")
 
-        batch_size = 10 # 로컬 성능에 따라 조절 가능
+        batch_size = 1 # 절대적인 안정성을 위해 1개씩 처리
+        import time, datetime
+        start_time = time.time()
+        
         for i in range(0, len(pending_reviews), batch_size):
             current_batch = pending_reviews[i:i+batch_size]
             percentage = (i / len(pending_reviews)) * 100
-            print(f"📦 배치 분석 중... ({i}/{len(pending_reviews)} - {percentage:.1f}%)")
+            
+            elapsed = time.time() - start_time
+            if i > 0:
+                eta_seconds = (elapsed / i) * (len(pending_reviews) - i)
+                eta_str = str(datetime.timedelta(seconds=int(eta_seconds)))
+            else:
+                eta_str = "계산 중..."
+                
+            elapsed_str = str(datetime.timedelta(seconds=int(elapsed)))
+            print(f"📦 분석 중... ({i}/{len(pending_reviews)} - {percentage:.1f}%) | 소요: {elapsed_str} | 남은시간: {eta_str}")
 
             results = classify_batch_with_local_llm(current_batch)
 
